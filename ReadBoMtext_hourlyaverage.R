@@ -1,7 +1,7 @@
 ##This script was given to me by Khalia Monk
 ##This script extracts one minute data from BOM and saves is as hourly averages in csv format
 #modified to fix precipitation - needed to sum, not average over the hour 
-#added pres and a calculation of W (water mixing ratio)
+#added pressure and a calculation of W (water mixing ratio)
 #modified for tzone
 
 # SET WORKING DIRECTORY #
@@ -147,6 +147,8 @@ bom_data <- lapply(list.files(pattern = "_SPS1"),
 bom_data_sps1 <- do.call(rbind, bom_data) #first campaign
 #fix date format 
 bom_data_sps1$date <- as.POSIXct(bom_data_sps1$date, format = "%Y-%m-%d %H:%M:%S", tz = "Etc/GMT-10")
+#add campaign tag 
+bom_data_sps1$campaign <- "SPS1"
 #test
 timePlot(bom_data_sps1, pollutant = "ws", type = "site")
 timePlot(bom_data_sps1, pollutant = "prcp", type = "site", plot.type = "h")
@@ -159,10 +161,12 @@ bom_data <- lapply(list.files(pattern = "_SPS2"),
 bom_data_sps2 <- do.call(rbind, bom_data) #second campaign
 #fix date format 
 bom_data_sps2$date <- as.POSIXct(bom_data_sps2$date, format = "%Y-%m-%d %H:%M:%S", tz = "Etc/GMT-10")
+#add campaign tag 
+bom_data_sps2$campaign <- "SPS2"
 
 timePlot(bom_data_sps2, pollutant = "ws", type = "site")
 timePlot(bom_data_sps2, pollutant = "prcp", type = "site", plot.type = "h")
-#bom_data_sps2$prcp <- bom_data_sps2$prcp *10 
+
 
 list.files(pattern = "_MUMBA") #third campaign
 bom_data <- lapply(list.files(pattern = "_MUMBA"),
@@ -170,16 +174,22 @@ bom_data <- lapply(list.files(pattern = "_MUMBA"),
 bom_data_mumba <- do.call(rbind, bom_data) #third campaign 
 #fix date format 
 bom_data_mumba$date <- as.POSIXct(bom_data_mumba$date, format = "%Y-%m-%d %H:%M:%S", tz = "Etc/GMT-10")
-#bom_data_mumba$prcp <- bom_data_mumba$prcp *10 
+#add campaign tag
+bom_data_mumba$campaign <- "MUMBA"
 
 timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison")
-save(bom_data_mumba, bom_data_sps1, bom_data_sps2, file = "BOM_data_updated.RData")
+#create one file with all the campaigns together 
 
+bom_data_all_campaigns <- rbind(bom_data_sps1, bom_data_sps2, bom_data_mumba)
+
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison")
+save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_updated.RData")
+
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison")
 load("BOM_data_updated.RData")
 
-#for Yang Zhang, write .csv files 
+#for Yang Zhang, write .csv files - these were written without pres, W
 write.csv(bom_data_sps1, file = "bom_data_sps1.csv", row.names = F, na = "")
 write.csv(bom_data_sps2, file = "bom_data_sps2.csv", row.names = F, na = "")
 write.csv(bom_data_mumba, file = "bom_data_mumba.csv", row.names = F, na = "")
