@@ -183,10 +183,10 @@ timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 
 bom_data_all_campaigns <- rbind(bom_data_sps1, bom_data_sps2, bom_data_mumba)
 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison")
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
 save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_updated.RData")
 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison")
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
 load("BOM_data_updated.RData")
 
 #for Yang Zhang, write .csv files - these were written without pres, W
