@@ -81,4 +81,5 @@ if (i == 2){
 oeh_mod <- rbind(oeh_sps1, oeh_sps2)
 
 #save 
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(oeh_mod, oeh_sps1,oeh_sps2, file = "OEH_model_output.RData")
