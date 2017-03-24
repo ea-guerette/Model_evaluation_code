@@ -1,4 +1,5 @@
 #this script is to read in model output from OEH 
+library(stringi)
 
 campaign <- c("SPS1", "SPS2")
 
