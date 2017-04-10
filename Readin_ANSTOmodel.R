@@ -98,3 +98,5 @@ wrf <- rbind(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_1
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2,wrf, file = "ANSTO_model_output.RData")
+
+load("ANSTO_model_output.RData")

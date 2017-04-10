@@ -8,10 +8,11 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Cam
 load("BOM_data_updated.RData")
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 load("ANSTO_model_output.RData")
+load("CMAQ_model_output.RData")
 
 #assign variables
 BOM <- bom_data_all_campaigns
-models <- wrf
+models <- rbind.fill(wrf, cmaq)
 site_list <- levels(as.factor(BOM$site))
 species_list <- c("temp", "RH", "ws", "u10", "v10", "prcp")
 species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "u wind", "v wind", "precip")
@@ -36,7 +37,7 @@ met_ln <- rbind.fill(BOM, model_met)
 #plot diurnal cycles and time series for all species in species_list 
 for (i in 1:length(species_list)) {
 
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], strip.)
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i])
   print(d, subset = "hour")
   
   for (j in 1:length(date_start)){
@@ -51,7 +52,7 @@ strip = function(...) strip.default(...)
 strip.left = strip.custom(style=1, horizontal = F)
 
 for (k in 1:length(species_list)){
-TaylorDiagram(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k]))
+  TaylorDiagram(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k]))
 
   stats <- modStats(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), type = c("data_source","site", "campaign"))
   #merge stats with site info... (lost when applying modStats)
