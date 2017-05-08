@@ -63,7 +63,7 @@ for (i in 1:length(species_list)) {
   png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
-  panel.text(0.2, 0.9, site_list[k], cex = 1, font = 1)
+  panel.text(0.15, 0.9, site_list[k], cex = 1, font = 1)
   trellis.unfocus()
   dev.off()
 }
