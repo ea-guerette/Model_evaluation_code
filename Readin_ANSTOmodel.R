@@ -79,6 +79,12 @@ names(data)[c(3,4,5,6,7,10,11,12)] <- c("pblh","wd","ws","u10", "v10", "temp", "
 #make prcp in mm 
 data$prcp <- data$prcp*10
 
+#fix wd 
+data =  within(data, wd <- atan2(-u10, -v10) * 180 / pi)
+## correct for negative wind directions
+ids = which(data$wd < 0) # ids where wd < 0
+data$wd[ids] = data$wd[ids] + 360
+
 #add campaign tag
 data$campaign <- campaign[i]
 
@@ -92,8 +98,10 @@ assign(dataframe_name,data)
   }
 }
 
+
 #create one large dataframe containing all six files 
 wrf <- rbind(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2)
+
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
