@@ -177,3 +177,13 @@ scatterPlot(stats_test_temp, x = "bin_temp", y = "MB", type = "data_source", gro
 #or could I make the size of the dots proportional to the number of data points in the bin? 
 #maybe add ref lines to indicate the range of MB we are aiming for (+-1?)
 
+b<-boxplot(ws ~data_source, data = met_ln, outline = T, range = 0.72)
+c <- b$stats
+bxp(b, outline = F)
+summary(cmaq$ws)
+quantile(cmaq$ws, 0.21)
+IQR(cmaq$ws, na.rm = T)
+
+#doesn't work so well for ws, as most values are low (0-4): try with temp 
+d<-boxplot(temp ~data_source, data = met_ln, outline = T, range = 0.72)
+d<-boxplot(temp ~data_source, data = met_ln, outline = T)#, range = 0.72)
