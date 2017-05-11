@@ -3,6 +3,7 @@
 #modified to fix precipitation - needed to sum, not average over the hour 
 #added pressure and a calculation of W (water mixing ratio)
 #modified for tzone
+#05/2017 - adding Bellambi and Wollongong Airport + fixed campaign dates
 
 # SET WORKING DIRECTORY #
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute")
@@ -28,8 +29,8 @@ stnnames <- c("Badgerys_Creek",
 stn_no <- c("stn20","stn21","stn22","stn23","stn24","stn25")
 
 period <- c("MUMBA", "SPS2", "SPS1")
-period_start <-c( "2012-12-20 13:00", "2012-04-15 13:00", "2011-02-03 00:00")
-period_end <- c("2013-02-16 12:00", "2012-05-13 23:00","2011-03-10 23:00")
+period_start <-c("2012-12-21 00:01", "2012-04-16 00:01", "2011-02-07 00:01")
+period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
 
 
 for (i in 1:length(stns)){
@@ -84,11 +85,14 @@ for (p in 1:3){
 }
 
 
-##Add Albion Park 
+##Add Bellambi, Albion Park airport 
 
-stnnames <- "Wollongong_Airport"
+stns <- c("068241",#Albion Park
+          "068228")#"Bellambi
+stnnames <- c("Wollongong_Airport", "Bellambi")
 
-bomdata <- read.csv(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute/HD01D_Data_068241_999999999271975.txt"), header=TRUE) 
+for (i in 1:length(stns)){
+bomdata <- read.csv(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute/HD01D_Data_",stns[i],"_999999999439464.txt"), header=TRUE) 
 
 bomdate <- ISOdatetime(bomdata$Year.Month.Day.Hour.Minutes.in.YYYY.1,
                        bomdata$MM.1, bomdata$DD.1, hour = bomdata$HH24.1, 
@@ -120,16 +124,16 @@ prcp <- as.data.frame(timeAverage(bom_data[,(1:3)], avg.time = "hour", data.thre
 prcp$prcp[prcp$prcp_int !=60] <- NA
 
 bom_data_hrlyavg$prcp <- as.numeric(prcp[,2])
-bom_data_hrlyavg$site <- "Wollongong_Airport"
+bom_data_hrlyavg$site <- stnnames[i] 
 
 # write for each modelling period
 for (p in 1:3){
   
   bom_data_subset <-subset(bom_data_hrlyavg, date >= period_start[p] & date <=period_end[p] )
-  write.csv(bom_data_subset,paste("~/R_Model_Intercomparison/Campaign data/BOM data/",stnnames[1],"_",period[p],".csv", sep=""), row.names=FALSE)
+  write.csv(bom_data_subset,paste("~/R_Model_Intercomparison/Campaign data/BOM data/",stnnames[i],"_",period[p],".csv", sep=""), row.names=FALSE)
   
 }
-
+}
 
 
 
@@ -189,6 +193,31 @@ save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
 load("BOM_data_updated.RData")
 
+#for Doreena - Bellambi MUMBA only - keep it in one minute data 
+bomdata <- read.csv(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute/HD01D_Data_068228_999999999439464.txt"), header=TRUE) 
+
+bomdate <- ISOdatetime(bomdata$Year.Month.Day.Hour.Minutes.in.YYYY.1,
+                       bomdata$MM.1, bomdata$DD.1, hour = bomdata$HH24.1, 
+                       min = bomdata$MI.format.in.Local.standard.time, sec = 0, tz= "Etc/GMT-10")
+
+bom_data <- data.frame( date = bomdate,
+                        prcp = bomdata$Precipitation.since.last..AWS..observation.in.mm, 
+                        prcp_int =bomdata$Period.over.which.precipitation.since.last..AWS..observation.is.measured.in.minutes,
+                        temp = bomdata$Air.Temperature.in.degrees.Celsius,
+                        td = bomdata$Dew.point.temperature.in.degrees.Celsius,
+                        RH = bomdata$Relative.humidity.in.percentage.., 
+                        ws = bomdata$Wind..1.minute..speed.in.km.h*0.277778,
+                        wd = bomdata$Wind..1.minute..direction.in.degrees.true, 
+                        swd = bomdata$Standard.deviation.of.wind..1.minute.)
+
+bellambi_mumba <- subset(bom_data, date >= "2012-12-21 01:00" & date <= "2013-02-16 00:00")
+save(bellambi_mumba, file = "BOM_Bellambi_1min_MUMBA.RData")
+
+timeVariation(bellambi_mumba, pollutant = "ws")
+windRose(bellambi_mumba)
+timePlot(bellambi_mumba, pollutant = "temp")
+
+########################
 #for Yang Zhang, write .csv files - these were written without pres, W
 write.csv(bom_data_sps1, file = "bom_data_sps1.csv", row.names = F, na = "")
 write.csv(bom_data_sps2, file = "bom_data_sps2.csv", row.names = F, na = "")
