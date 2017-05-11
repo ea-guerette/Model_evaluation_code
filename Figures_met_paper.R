@@ -16,9 +16,9 @@ load("CMAQ_model_output.RData")
 BOM <- bom_data_all_campaigns
 models <- rbind.fill(wrf, cmaq)
 site_list <- levels(as.factor(BOM$site))
-species_list <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp", "pblh")
+species_list <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp", "pblh", "SWR")
 species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp") #, "pblh")
-species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "wind direction",  "u wind", "v wind", "precip", "pblh")
+species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "wind direction",  "u wind", "v wind", "precip", "pblh", "SWR")
 campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("21/12/2012","01/02/2011", "01/04/2012") #check proper dates
 date_end <- c("15/02/2013","07/03/2011","17/05/2012") #check proper dates 
@@ -28,10 +28,8 @@ model_list <- c("CMAQ", "WRF_10", "WRF_11")
 #select sites 
 model_met <- subset(models, site %in% site_list)
 #create site info 
-site_lat <- as.numeric(levels(as.factor(model_met$site_lat))) 
-site_lon <- as.numeric(levels(as.factor(model_met$site_lon)))
-site <- site_list
-site_info <- data.frame(site, site_lat, site_lon)
+site_info <- data.frame(site = model_met$site, site_lat = model_met$site_lat, site_lon = model_met$site_lon)
+site_info <- unique(site_info)
 
 #merge obs and model output into wide format 
 met <- merge(BOM, model_met, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
@@ -93,17 +91,17 @@ for (i in 1:length(species_list)) {
 strip = function(...) strip.default(...)
 strip.left = strip.custom(style=1, horizontal = F)
 
-for (k in 1:length(species_list)){
+for (k in 1:length(species_list_2)){
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-   png(filename = paste(species_list[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-   TaylorDiagram(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k]))
+   png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+   TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k]))
   dev.off()
   
-  png(filename = paste(species_list[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-  TaylorDiagram(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), type = "data_source", group = "campaign", main = paste0(species_names[k]))
+  png(filename = paste(species_list_2[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+  TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = paste0(species_names[k]))
   dev.off()
     
-  stats <- modStats(met, obs = paste0(species_list[k],".obs"), mod = paste0(species_list[k],".mod"), type = c("data_source","site", "campaign"))
+  stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
   #merge stats with site info... (lost when applying modStats)
   stats <- merge(stats, site_info, by = "site")
   
@@ -128,7 +126,7 @@ for (j in 1:length(site_list)) {
 for (k in 1:length(species_list_2)){
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list_2[k],site_list[j],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-  TaylorDiagram(subset(met, site %in% site_list[j]), obs = paste0(species_list[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k], "-", site_list[j]))
+  TaylorDiagram(subset(met, site %in% site_list[j]), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k], "-", site_list[j]))
   dev.off()
   
   png(filename = paste(species_list[k],site_list[j],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
