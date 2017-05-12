@@ -20,8 +20,8 @@ species_list <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp", "pblh", "SWR")
 species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp") #, "pblh")
 species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "wind direction",  "u wind", "v wind", "precip", "pblh", "SWR")
 campaign <- c("MUMBA","SPS1", "SPS2")
-date_start <- c("21/12/2012","01/02/2011", "01/04/2012") #check proper dates
-date_end <- c("15/02/2013","07/03/2011","17/05/2012") #check proper dates 
+date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
+date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
 stat_list <- c("r", "RMSE", "MB")
 model_list <- c("CMAQ", "WRF_10", "WRF_11")
 
@@ -49,7 +49,7 @@ for (i in 1:length(species_list)) {
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
   png(filename = paste(species_list[i],campaign[j],"timeseries.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
-  scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", tyep = "campaign", plot.type = "l", main = campaign[j])
+  scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "campaign", plot.type = "l")#, main = campaign[j])
   dev.off()
   }
 }
@@ -69,10 +69,10 @@ for (i in 1:length(species_list)) {
 }
 }
 for (i in 1:length(species_list)) {
-  
+   
   for (j in 1:length(date_start)){
-    png(filename = paste(species_list[i],"timeseries.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
-    scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "campaign", plot.type = "l", main = site_list[k], col = "blue")
+    png(filename = paste(species_list[i],campaign[j],"timeseries_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+    scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l", main = campaign[j])
     dev.off()
   }
 }
@@ -144,6 +144,12 @@ for (m in 1:length(model_list)) {
   dev.off()
     }
 }
+
+#make more stats - overall (already have by site for each campaign)
+#also make daily values by site - averages for everything except precipitation - see BOM code for that 
+#then get stats for daily values, by site and overall 
+#also make sum for entire campaigns, by site, for precipitation and run stats 
+
 
 #next, figure out how to make quartiles, and plot for those... you saw that in a model evaluation paper 
 #actually, they binned their data, and ran stats on those 
