@@ -4,6 +4,7 @@ library(openair)
 library(plyr)
 library(lattice)
 library(latticeExtra)
+library(stringi)
 
 #load in data 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
@@ -79,13 +80,13 @@ for (i in 1:length(species_list)) {
 #plot median instead of mean in overall diurnal plots
 for (i in 1:length(species_list)) {
   
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], key.columns = 2, statistic = "median")
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], key.columns = 2, statistic = "median", conf.int = 0.75)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"median_diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   dev.off()
 }
-#looks ugly as is - may have to work on it 
+#looks ugly as is - may have to work on it - only including one conf.int seems to help - haven't rerun the plots though 
 
 #plot Taylor diagrams and compute stats for all species in species_list and plot google bubble plots
 strip = function(...) strip.default(...)
@@ -145,10 +146,135 @@ for (m in 1:length(model_list)) {
     }
 }
 
-#make more stats - overall (already have by site for each campaign)
-#also make daily values by site - averages for everything except precipitation - see BOM code for that 
-#then get stats for daily values, by site and overall 
-#also make sum for entire campaigns, by site, for precipitation and run stats 
+#make more stats 
+
+#overall stats, hourly values 
+for (k in 1:length(species_list_2)){
+stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+
+#save stats and rename dataframe
+stats_name <- paste0("stats_dom_avg_",species_list[k])
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+assign(stats_name,stats)
+}
+#overall stats, daily averages (or total, for precipitation)
+met_daily <- timeAverage(met, avg.time = "1 day", type = c("data_source","site","campaign"))
+met_daily_sum <- timeAverage(met, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign"))
+met_daily$prcp.mod <- met_daily_sum$prcp.mod
+met_daily$prcp.obs <- met_daily_sum$prcp.obs
+for (k in 1:length(species_list_2)){
+  stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+  
+  #save stats and rename dataframe
+  stats_name <- paste0("daily_stats_dom_avg_",species_list[k])
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+  write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+  assign(stats_name,stats)
+}
+
+for (k in 1:length(species_list_2)){
+  stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
+  
+  #save stats and rename dataframe
+  stats_name <- paste0("daily_stats_",species_list[k])
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+  write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+  assign(stats_name,stats)
+}
+#It looks like daily is better for prcp than hourly - but what about campaign totals
+sums <- ddply(met_ln, .(site, campaign, data_source), numcolwise(sum), na.rm = TRUE)
+total_prcp <- subset(sums, select = c("site", "campaign", "data_source", "prcp"))
+#try to plot this in a meaningful manner
+
+b1 <- barchart(total_prcp$prcp ~ total_prcp$data_source|total_prcp$site * total_prcp$campaign,
+         col = c("blue", "grey", "purple", "red"), ylab = "Total precipitaion (mm)", 
+         strip.left = strip.custom(style=1, horizontal = F),
+         par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+png(filename = "Total_precipitation.png", width = 12 * 300, height = 9 * 300, res = 300)
+print(useOuterStrips(b1))
+dev.off()
+
+#make google maps of mean bias, etc for total precipitation 
+total_prcp_obs <- subset(total_prcp, data_source %in% "OBS")
+total_prcp_models <- subset(total_prcp, data_source != "OBS")
+total_prcp_wide <- merge(total_prcp_obs, total_prcp_models, by = c("site", "campaign"), suffixes = c(".obs", ".mod", all = T))
+
+stats <- modStats(total_prcp_wide, mod = "prcp.mod", obs = "prcp.obs", type = c("data_source.mod","site", "campaign"))
+stats <- merge(stats, site_info, by = "site")
+stat_list_2 <- c("MB", "NMB")
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+strip = function(...) strip.default(...)
+strip.left = strip.custom(style=1, horizontal = F)
+for (m in 1:length(stat_list_2)) {
+  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list_2[m],
+                       maptype = "roadmap", col = "jet", cex = 1, main = paste("Total precipitation", "-", stat_list_2[m]),
+                       key.footer = stat_list_2[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source.mod"))
+  png(filename = paste("Total_precipitation", stat_list_2[m],"map.png", sep = '_'), width = 6 * 300, height = 6 * 300, res = 300)
+  print(useOuterStrips(a1$plot))
+  dev.off()
+}
+#save stats as data.frame
+stats_total_prcp <- stats
+
+#as I prepared plots for ANSTO comparison, I thought of this: 
+
+d1 <- densityplot(~wd|site * campaign, data = met_ln,
+                  groups = data_source,
+                  plot.points=FALSE,
+                  auto.key = T, 
+                  strip.left = strip.custom(style=1, horizontal = F),
+                  par.settings = list(superpose.line = list(col = c("blue","black","purple","red"))),
+                  from=0,to=360)
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+png(filename = "wd_densities.png", width = 12 * 300, height = 9 * 300, res = 300)
+print(useOuterStrips(d1))
+dev.off()
+
+
+#this is such a mess... 
+#quick fix for now, use par to put two plots on top of each other - the first one (which will be computer second...)
+#will be the scatter plot - use the breaks from histograms() to cut data into bins 
+#second plot will be histograms - not sure how to fix the labels, etc. but this should do as a first cut
+species_col <- c(4,7)
+for (t in 1:length(species_col)) {
+  x_1 <- floor((max(met[,species_col[t]], na.rm = T) - min(met[,species_col[t]], na.rm = T))/10)
+  x_max <- ceiling(max(met[,species_col[t]], na.rm = T)/x_1) * x_1
+  x_breaks <- c(0, seq(x_1, x_max, by = x_1))
+  a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
+               col = "grey90", xlab = names(met[species_col[t]]),
+               breaks = x_breaks,
+               scales = list(x = list(at = x_breaks)))
+
+  met$bin <- cut(met[,species_col[t]], breaks = x_breaks, labels = seq((x_1-0)/2, (x_max-(x_1/2)), by = x_1))
+  stats_test <- modStats(met, obs = "ws.obs", mod = "ws.mod", type = c("data_source", "campaign", "bin"))
+  b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source, 
+              xlab = names(met[species_col[t]]), auto.key = T, 
+              panel =function(...){  
+                panel.xyplot(...);
+                panel.abline(h = 0, col = "blue", lty = 2)
+              })
+print(b)
+print(a)
+doubleYScale(a, b, use.style = T, add.ylab2 = T)
+}
+
+a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
+               col = "grey90", xlab = names(met[species_col[t]]),
+               breaks = x_breaks,
+               scales = list(x = list(at = x_breaks)))
+               panel =function(...){  
+               panel.xyplot(...);
+               panel.superpose()})
+
+
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+par(mfrow = c(2,1))
+png(filename = paste(names(met[species_col[t]]),"mb_by_bin.png", sep = "_"), width = 9 * 300, height = 6 * 300, res = 300)
+
+dev.off()
+
 
 
 #next, figure out how to make quartiles, and plot for those... you saw that in a model evaluation paper 
@@ -156,7 +282,9 @@ for (m in 1:length(model_list)) {
 
 bin_temp <- cut(met$temp.obs, breaks = c(0, seq(5, 50, by = 5)), labels = 1:10)
 hist(as.numeric(bin_temp))
-a <- hist(met$temp.obs)
+a <- hist(met$temp.obs, xlab = "observed temperatures", main = "")
+
+a[["panel.args.common"]]$breaks
 
 summary(met$temp.obs)
 summary(bin_temp)
@@ -169,7 +297,7 @@ summary(bin_ws)
 #then, apply modStats, adding bin to type - maybe removing site - 
 met$bin_ws <- cut(met$ws.obs, breaks = c(-2, seq(2, 20, by = 2)), labels = 1:10)
 stats_test <- modStats(met, obs = "ws.obs", mod = "ws.mod", type = c("data_source", "campaign", "bin_ws"))
-
+scatterPlot(stats_test, x = "bin_ws", y = "MB", group = "data_source", type = "campaign", pch = 16)
 scatterPlot(stats_test, x = "bin_ws", y = "MB", type = "data_source", group = "campaign")
 #it's a bit ugly but it works... need better labels...
 #maybe add density of data to the plots - would require making my own xy plot - feasible but a pain 
@@ -189,5 +317,17 @@ quantile(cmaq$ws, 0.21)
 IQR(cmaq$ws, na.rm = T)
 
 #doesn't work so well for ws, as most values are low (0-4): try with temp 
-d<-boxplot(temp ~data_source, data = met_ln, outline = T, range = 0.72)
-d<-boxplot(temp ~data_source, data = met_ln, outline = T)#, range = 0.72)
+e<-boxplot(temp ~data_source, data = met_ln, outline = T, range = 0.72)
+e<-boxplot(temp ~data_source, data = met_ln, outline = T)#, range = 0.72)
+
+a <- histogram(~ws.obs|campaign, data = met, col = "grey", xlab = "observed wind speeds", xlim = c(0,NA))
+a[["panel.args.common"]]$breaks
+
+hist(subset(met, campaign %in% "MUMBA"), met$ws.obs)#, breaks = a[["panel.args.common"]]$breaks)
+b <- hist(met$ws.obs, add = T, col = "grey90")
+b$breaks
+
+
+stats_test <- modStats(met, obs = "ws.obs", mod = "ws.mod", type = c("data_source", "campaign", "bin_ws"))
+
+xyplot()

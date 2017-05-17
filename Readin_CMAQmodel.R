@@ -7,7 +7,7 @@ library(reshape2)
 
 
 #assign variables
-campaign <- c("SPS1", "SPS2")#, "MUMBA")
+campaign <- c("SPS1", "SPS2", "MUMBA")
 
 #go to folder containing model output 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/WASPSS_CMAQ_WRFCHEMemis/")
@@ -92,7 +92,7 @@ for (i in 1:length(campaign)) {
 
 
 #create one large dataframe containing all six files 
-cmaq <- rbind(cmaq_SPS1,cmaq_SPS2)#,cmaq_MUMBA)
+cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
