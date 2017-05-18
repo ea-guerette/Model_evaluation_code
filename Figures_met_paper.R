@@ -232,48 +232,49 @@ png(filename = "wd_densities.png", width = 12 * 300, height = 9 * 300, res = 300
 print(useOuterStrips(d1))
 dev.off()
 
-
-#this is such a mess... 
-#quick fix for now, use par to put two plots on top of each other - the first one (which will be computer second...)
-#will be the scatter plot - use the breaks from histograms() to cut data into bins 
-#second plot will be histograms - not sure how to fix the labels, etc. but this should do as a first cut
+#this is to plot the binned MB versus observations 
+#I still don't like the legend (I want three columns), and that the symbols are all open circles (hard to read in b/w)
+#I also need to fix the x axis labelling 
 species_col <- c(4,7)
+obs_species <- c("temp.obs", "ws.obs")
+mod_species <- c("temp.mod","ws.mod")
 for (t in 1:length(species_col)) {
   x_1 <- floor((max(met[,species_col[t]], na.rm = T) - min(met[,species_col[t]], na.rm = T))/10)
   x_max <- ceiling(max(met[,species_col[t]], na.rm = T)/x_1) * x_1
   x_breaks <- c(0, seq(x_1, x_max, by = x_1))
-  a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
-               col = "grey90", xlab = names(met[species_col[t]]),
-               breaks = x_breaks,
-               scales = list(x = list(at = x_breaks)))
-
-  met$bin <- cut(met[,species_col[t]], breaks = x_breaks, labels = seq((x_1-0)/2, (x_max-(x_1/2)), by = x_1))
-  stats_test <- modStats(met, obs = "ws.obs", mod = "ws.mod", type = c("data_source", "campaign", "bin"))
-  b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source, 
+ # a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
+ #             col = "grey90", xlab = names(met[species_col[t]]),
+ #              breaks = x_breaks,
+ #             scales = list(x = list(at = x_breaks)))
+  c <- densityplot(~ met[,species_col[t]]|campaign, data = met, plot.points=FALSE, col = "grey", from = 0, to = x_max, xlab = names(met[species_col[t]]))
+   
+  met$bin <- cut(met[,species_col[t]], breaks = x_breaks, labels = (seq(0, (x_max-x_1), by = x_1)))
+  stats_test <- modStats(met, obs = obs_species[t], mod = mod_species[t], type = c("data_source.mod", "campaign", "bin"))
+  stats_test$bin <- as.numeric(stats_test$bin)*x_1
+  b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source.mod, 
               xlab = names(met[species_col[t]]), auto.key = T, 
               panel =function(...){  
                 panel.xyplot(...);
                 panel.abline(h = 0, col = "blue", lty = 2)
               })
-print(b)
-print(a)
-doubleYScale(a, b, use.style = T, add.ylab2 = T)
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+  png(filename = paste(names(met[species_col[t]]),"mb_by_bin.png", sep = "_"), width = 9 * 300, height = 5 * 300, res = 300)
+  print(doubleYScale(c, b, use.style = F, add.ylab2 = T))
+  dev.off()
 }
 
-a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
-               col = "grey90", xlab = names(met[species_col[t]]),
-               breaks = x_breaks,
-               scales = list(x = list(at = x_breaks)))
-               panel =function(...){  
-               panel.xyplot(...);
-               panel.superpose()})
+print(b)
+
+#a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
+ #              col = "grey90", xlab = names(met[species_col[t]]),
+  #             breaks = x_breaks,
+   #            scales = list(x = list(at = x_breaks)))
+    #           panel =function(...){  
+     #          panel.xyplot(...);
+      #         panel.superpose()})
 
 
-setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-par(mfrow = c(2,1))
-png(filename = paste(names(met[species_col[t]]),"mb_by_bin.png", sep = "_"), width = 9 * 300, height = 6 * 300, res = 300)
 
-dev.off()
 
 
 
