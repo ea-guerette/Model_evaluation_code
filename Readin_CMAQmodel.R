@@ -91,7 +91,7 @@ for (i in 1:length(campaign)) {
   }
 
 
-#create one large dataframe containing all six files 
+#create one large dataframe containing all three files 
 cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 
 #set directory and save all dataframes 
