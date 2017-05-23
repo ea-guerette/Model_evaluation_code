@@ -1,4 +1,4 @@
-#work in progress - I the moment this only includes wrf and cmaq - send that analysis to Alan (and Jeremy)
+#This is very similar to Figures_ANSTO_analysis, but in this one, I add all models for met evaluation
 
 library(openair)
 library(plyr)
@@ -12,10 +12,14 @@ load("BOM_data_updated.RData")
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 load("ANSTO_model_output.RData")
 load("CMAQ_model_output.RData")
+load("WRFCHEM_model_output.RData")
+load("CSIRO_model_output.RData")
+load("OEH_model_output.RData")
+
 
 #assign variables
 BOM <- bom_data_all_campaigns
-models <- rbind.fill(wrf, cmaq)
+models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model)
 site_list <- levels(as.factor(BOM$site))
 species_list <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp", "pblh", "SWR")
 species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp") #, "pblh")
@@ -24,13 +28,14 @@ campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
 date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
 stat_list <- c("r", "RMSE", "MB")
-model_list <- c("CMAQ", "WRF_10", "WRF_11")
+model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
 
 #select sites 
 model_met <- subset(models, site %in% site_list)
+
 #create site info 
-site_info <- data.frame(site = model_met$site, site_lat = model_met$site_lat, site_lon = model_met$site_lon)
-site_info <- unique(site_info)
+#site_info <- data.frame(site = model_met$site, site_lat = model_met$site_lat, site_lon = model_met$site_lon)
+#site_info <- unique(site_info)
 
 #merge obs and model output into wide format 
 met <- merge(BOM, model_met, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
@@ -41,7 +46,7 @@ met_ln <- rbind.fill(BOM, model_met)
 #plot diurnal cycles and time series for all species in species_list 
 for (i in 1:length(species_list)) {
 
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], key.columns = 2)
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
@@ -54,12 +59,13 @@ for (i in 1:length(species_list)) {
   dev.off()
   }
 }
+
 #the above shows all models, averaged across all sites, separately for each campaign 
 #need the same plots, for each site... 
 for (k in 1:length(site_list)) {
 for (i in 1:length(species_list)) {
   
-  d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], key.columns = 2, main = site_list[k])
+  d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2, main = site_list[k])
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")

@@ -1,6 +1,9 @@
 #this script is to read in model output from OEH 
+
+#load packages
 library(stringi)
 
+#assign variables
 campaign <- c("SPS1", "SPS2")
 
 for (i in 1:length(campaign)) {
@@ -67,19 +70,104 @@ data$data_source <- "OEH"
 data$campaign <- campaign[i]
 
 #save dataframe
-if (i == 1){
-  oeh_sps1 <- data
-}
-
-if (i == 2){
-  oeh_sps2 <- data
-}
+dataframe_name <- paste0("oeh_model_",campaign[i]) 
+assign(dataframe_name,data)
 
 }
+
+#MUMBA output is messy, so I have to code it separately 
+#the output for the actual MUMBA site is different from that of the other sites 
+start_date <- c("2013-01-01","2013-02-01")
+folders <- c("jan13_mumba_CTM.csv", "feb13_mumba_CTM.csv") 
+
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/OEH_CCAM_CTM_MUMBA/")
+for (j in 1:length(folders)) {
+#read file in
+data <- read.csv(file = folders[j], header = T)
+#create date vector 
+date = seq(as.POSIXct(start_date[j]), by = "hours", length = nrow(data), tzone = "UTC")
+#create other vector
+site <- "MUMBA"
+campaign <- "MUMBA"
+
+#select only model output 
+data <- data[ , grep(pattern = "cell_", names(data))]
+names(data) <- stri_replace_all_fixed(names(data), "cell_", "" )
+names(data) <- toupper(names(data))
+names(data)[c(12,18,24,25,26,36,37,38,47,48,49,50,51,42,43,44,45,46)] <- c("HCHO", "Methanol", "C5H8", "IsopRxnProd", "Terpenes", "Toluene", "Xylenes", "Benzene", "ws", "wd", "temp", "H2O", "pblh", "Na", "Mg","Ca", "K", "Cl")
+
+data <- cbind(date,data,site,campaign)
+data$data_source <- "OEH"
+#create NOx column
+data$NOx <- data$NO + data$NO2
+#calculate u10 and v10
+mwd <- 270- data$wd
+ifelse( mwd < 0, mwd +360, mwd) 
+data$v10 <- data$ws * sin(pi*mwd/180)
+data$u10 <- data$ws * cos(pi*mwd/180)
+
+dataframe_name <- paste0("oeh_model_mumba_site_",j) 
+assign(dataframe_name,data)
+}
+oeh_model_MUMBA_site <- rbind(oeh_model_mumba_site_1, oeh_model_mumba_site_2)
+
+#now, read in the other files... again, two folders 
+start_date <- c("2013-01-01","2013-02-01")
+date_length <- c(744,672)
+folders <- c("OEHsites_CTMjan13","OEHsites_CTMfeb13")
+
+for (i in 1:length(folders)) {
+  setwd(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/", folders[i], "/"))
+
+  data <- lapply(list.files(pattern = ".csv"),
+                 function(.file) read.csv(.file, header = TRUE))
+  ##this combines all the files into one (stacked on top of each other)
+  data <- do.call(rbind, data)
+  #make date vector 
+  date = seq(as.POSIXct(start_date[i]), by = "hours", length = date_length[i], tzone = "UTC")
+  #make other vectors 
+  campaign <- "MUMBA"
+  site <- c(rep("Wollongong_Airport",date_length[i]), rep("Albion_Park_Sth", date_length[i]),
+            rep("Badgerys_Creek", date_length[i]), rep("Bankstown_Airport", date_length[i]),
+            rep("Bargo", date_length[i]), rep("Bringelly", date_length[i]),
+            rep("Camden_Airport", date_length[i]), rep("Chullora", date_length[i]),
+            rep("Earlwood", date_length[i]),rep("Kembla_Grange", date_length[i]),
+            rep("Lindfield", date_length[i]),rep("Liverpool", date_length[i]),
+            rep("Macarthur", date_length[i]),rep("Newcastle", date_length[i]),
+            rep("Oakdale", date_length[i]), rep("Prospect", date_length[i]),
+            rep("Randwick", date_length[i]),rep("Richmond", date_length[i]),
+            rep("Richmond_RAAF", date_length[i]),rep("Rozelle", date_length[i]),
+            rep("St_Marys", date_length[i]),rep("Sydney_Airport", date_length[i]),
+            rep("Vineyard", date_length[i]),rep("Westmead", date_length[i]),
+            rep("Williamtown_RAAF", date_length[i]),rep("Wollongong", date_length[i]))
+  #clean up data 
+  data <- data[ , grep(pattern = "ctm", names(data))]
+  names(data) <- stri_replace_all_fixed(names(data), ".ctm.", "" )
+  names(data)[c(8,12,13,14,15,16,17)] <- c("PM2.5", "ws","wd","temp","H2O","pblh", "prcp")
+ 
+  #calculate u10 and v10
+  mwd <- 270- data$wd
+  ifelse( mwd < 0, mwd +360, mwd) 
+  data$v10 <- data$ws * sin(pi*mwd/180)
+  data$u10 <- data$ws * cos(pi*mwd/180)
+  
+   #combine
+  data <- cbind(date, data, site, campaign)
+  data$NOx <- data$NO + data$NO2
+  data$data_source <- "OEH"  
+  dataframe_name <- paste0("oeh_model_",folders[i]) 
+  assign(dataframe_name,data)
+}
+#combine jan and feb
+oeh_model_other_sites <- rbind(oeh_model_OEHsites_CTMjan13, oeh_model_OEHsites_CTMfeb13)
+
+
+#make a MUMBA dataframe 
+oeh_model_mumba <- rbind.fill(oeh_model_MUMBA_site, oeh_model_other_sites)
 
 #combine campaigns 
-oeh_mod <- rbind(oeh_sps1, oeh_sps2)
+oeh_model <- rbind.fill(oeh_model_SPS1, oeh_model_SPS2, oeh_model_mumba)
 
 #save 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(oeh_mod, oeh_sps1,oeh_sps2, file = "OEH_model_output.RData")
+save(oeh_model, oeh_model_SPS1,oeh_model_SPS2, oeh_model_mumba, file = "OEH_model_output.RData")

@@ -14,7 +14,7 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Mod
 
 for (i in 1:length(campaign)) {
   
-  fname <- paste0("wrf_chem_aer_d04_",campaign[1],".nc")
+  fname <- paste0("wrf_chem_aer_d04_",campaign[i],".nc")
   ncin <- nc_open(fname)
   
   #create a date vector 
@@ -76,7 +76,7 @@ for (i in 1:length(campaign)) {
   names(data)[c(3,4,5,6,8,10,11,9)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
   #make prcp in mm 
   data$prcp <- data$prcp*10
-  
+  data$temp <- data$temp - 273.15 
   #add campaign tag
   data$campaign <- campaign[i]
   

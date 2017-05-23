@@ -96,6 +96,6 @@ cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(cmaq_SPS1,cmaq_SPS2, cmaq, file = "CMAQ_model_output.RData")
+save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output.RData")
 
 load("CMAQ_model_output.RData")
