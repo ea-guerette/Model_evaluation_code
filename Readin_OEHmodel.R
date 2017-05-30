@@ -65,6 +65,9 @@ ifelse( mwd < 0, mwd +360, mwd)
 data$v10 <- data$ws * sin(pi*mwd/180)
 data$u10 <- data$ws * cos(pi*mwd/180)
 
+#create NOx column
+data$NOx <- data$NO + data$NO2
+
 #add data_source and campaign tag: 
 data$data_source <- "OEH"
 data$campaign <- campaign[i]

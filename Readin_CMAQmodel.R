@@ -35,8 +35,8 @@ for (i in 1:length(campaign)) {
     #replace white spaces between words by "_"
     site_name <- stri_replace_all_charclass(site_name, "\\p{WHITE_SPACE}", "_")
     #Replace MUMBA_University_site by UOW  
-    site_name[c(2)] <- "UOW"
-    #site_name[c(2,29)] <- c("UOW", "Warrawong")
+    #site_name[c(2)] <- "UOW"
+    site_name[c(2,29)] <- c("UOW", "Warrawong")
     site <- site_name
     
     #do a similar thing for site owner 
@@ -97,5 +97,6 @@ cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output.RData")
+save(site_info, file = "site_info.Rdata")
 
 load("CMAQ_model_output.RData")

@@ -1,42 +1,41 @@
 #this script selects the right range of OEH obs for the intercomparison 
+#modified following the fixing of date/time issues in OEH obs
+#also, I think I was loading an old one - the site names are now OK straight off "oeh_data_2011_2013_long.RData" 
 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/OEH data")
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
 load("oeh_data_2011_2013_long.RData")
 
 #load packages and functions
 library(openair)
 library(stringi)
 library(plyr)
-#function to capitalise words 
-capwords <- function(s, strict = FALSE) {
-  cap <- function(s) paste(toupper(substring(s, 1, 1)),
-                           {s <- substring(s, 2); if(strict) tolower(s) else s},
-                           sep = "", collapse = " " )
-  sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
-}
+
 
 #Modify site names 
-oeh_data_2011_2013_long$site <- tolower(oeh_data_2011_2013_long$site)
-oeh_data_2011_2013_long$site <- stri_replace_all_fixed(oeh_data_2011_2013_long$site, ".", " ")
-oeh_data_2011_2013_long$site <- capwords(oeh_data_2011_2013_long$site)
-oeh_data_2011_2013_long$site <- stri_replace_all_fixed(oeh_data_2011_2013_long$site, " ", "_")
+#oeh_data_2011_2013_long$site <- tolower(oeh_data_2011_2013_long$site)
+#oeh_data_2011_2013_long$site <- stri_replace_all_fixed(oeh_data_2011_2013_long$site, ".", " ")
+#oeh_data_2011_2013_long$site <- stri_trans_totitle(oeh_data_2011_2013_long$site)
+#oeh_data_2011_2013_long$site <- stri_replace_all_fixed(oeh_data_2011_2013_long$site, " ", "_")
 
-#select appropriate sites
+#select appropriate sites - use the list from site_info... 
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
+load("site_info.RData")
 site_list <- levels(site_info$site)
 oeh_data_2011_2013_long_sub <- subset(oeh_data_2011_2013_long, site %in% site_list)
 
 #assign variables to select correct periods 
 campaign <- c("MUMBA","SPS1", "SPS2")
-date_start <- c("2012-12-21 01:00:00","2011-02-07 01:00:00", "2012-04-16 01:00:00")
-date_end <- c("2013-02-16 00:00:00","2011-03-07 00:00:00","2012-05-14 00:00:00") 
+date_start <- c("2012-12-21","2011-02-07", "2012-04-16")
+date_end <- c("2013-02-15 23:00:00","2011-03-06 23:00:00","2012-05-13 23:00:00") 
 
 for (i in 1:length(campaign)) {
-  data <- subset(oeh_data_2011_2013_long_sub, date >= date_start[i] & date <=date_end[i] )
+  data <- subset(oeh_data_2011_2013_long_sub, date >= as.POSIXct(date_start[i], tz = "Etc/GMT-10") & date <= as.POSIXct(date_end[i],tz = "Etc/GMT-10"))
   data$campaign <- campaign[i]
   data$data_source <- 'OBS'
-  names(data)[c(7,8,10,12,13,15)] <- c("NOx", "O3", "PM2.5", "temp", "wd", "ws")
- 
-#need to add Westmead manually for SPS1 and SPS2 
+  #names(data)[c(7,8,10,12,13,15)] <- c("NOx", "O3", "PM2.5", "temp", "wd", "ws")
+  #data <- transform(data, NO = NO*10, NO2 = NO2*10, NOx = NOx*10, O3 = O3*10, SO2 = SO2*10, CO = CO*1000) 
+  
+#need to add Westmead manually for SPS1 and SPS2 - units already in ppb (inc. CO)
   if (i >= 2 & i <= 3 ) {
   data <- subset(data, site != "Westmead")
   
@@ -44,7 +43,7 @@ for (i in 1:length(campaign)) {
   setwd(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign Data/", campaign[i]))
   
   westmead <- import(file = paste0(campaign[i],"_Air_Quality_Station_Data.csv"), header.at = 3, data.at = 4, date = "Date", time = "Time", 
-                         date.format = "%d/%m/%Y", time.format = "%H:%M", tz = "Etc/GMT-10")
+                         date.format = "%d/%m/%Y", time.format = "%H:%M", tz = "Etc/GMT-10", correct.time = -3600)
   
   #Fix the variable names 
   sub.data <- westmead
@@ -77,11 +76,14 @@ for (i in 1:length(campaign)) {
   ## merge with the rest 
   data <- rbind.fill(data, westmead)
 }  
-  dataframe_name <- paste0("oeh_",campaign[i]) 
+  #remove 2am from dataframe - calibration 
+  data <- selectByDate(data, hour = c(0,2:23)) 
+  #save data under a another name 
+  dataframe_name <- paste0("oeh_obs_",campaign[i]) 
   assign(dataframe_name,data)
 }
 
-oeh_data <- rbind.fill(oeh_MUMBA, oeh_SPS1, oeh_SPS2)
+oeh_obs <- rbind.fill(oeh_obs_MUMBA, oeh_obs_SPS1, oeh_obs_SPS2)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/")
-save(oeh_data, oeh_MUMBA, oeh_SPS1, oeh_SPS2, file = "OEH_obs.RData")
+save(oeh_obs, oeh_obs_MUMBA, oeh_obs_SPS1, oeh_obs_SPS2, file = "OEH_obs.RData")
