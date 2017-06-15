@@ -1,4 +1,10 @@
 #This is very similar to Figures_ANSTO_analysis, but in this one, I add all models for met evaluation
+#myColours <- c("#1B9E77", "#386CB0", "#666666","#FFB843", "#F42E3C", "#520066") #that purple is hard to distinguish from black 
+myColours <- c("#1B9E77", "#386CB0", "#000000","#FFB843", "#F42E3C", "#7570B3")
+myColours <- c("#1B9E77", "#386CB0", "#000000","#FF7F00", "#F42E3C", "#7570B3") #trying a more vibrant orange (less yellow)
+
+mylineTypes <- c("dashed","dotted","solid","dotdash","longdash","twodash")
+mylineWidths <- c(2,2,3,2,2,2)
 
 library(openair)
 library(plyr)
@@ -15,20 +21,25 @@ load("CMAQ_model_output.RData")
 load("WRFCHEM_model_output.RData")
 load("CSIRO_model_output.RData")
 load("OEH_model_output.RData")
+load("site_info.RData")
 
+#only include wrf-11 (issue with wrf-10)
+levels(as.factor(wrf$data_source))
+wrf <- subset(wrf, data_source == "WRF_11")
 
 #assign variables
 BOM <- bom_data_all_campaigns
 models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model)
 site_list <- levels(as.factor(BOM$site))
-species_list <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp", "pblh", "SWR")
+species_list <- c("temp", "RH", "ws","wd","u10", "v10", "prcp", "pblh", "SWR")
 species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp") #, "pblh")
 species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "wind direction",  "u wind", "v wind", "precip", "pblh", "SWR")
 campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
 date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
 stat_list <- c("r", "RMSE", "MB")
-model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
+#model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
+model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
 
 #select sites 
 model_met <- subset(models, site %in% site_list)
@@ -46,7 +57,7 @@ met_ln <- rbind.fill(BOM, model_met)
 #plot diurnal cycles and time series for all species in species_list 
 for (i in 1:length(species_list)) {
 
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2)
+  d <- timeVariation(met_ln, pollutant = species_list[1], group = "data_source", type = "campaign", ci = F, ylab = species_names[1], key.columns = 3, col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
@@ -86,13 +97,13 @@ for (i in 1:length(species_list)) {
 #plot median instead of mean in overall diurnal plots
 for (i in 1:length(species_list)) {
   
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = T, ylab = species_names[i], key.columns = 2, statistic = "median", conf.int = 0.75)
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2, statistic = "median", conf.int = 0.75)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"median_diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   dev.off()
 }
-#looks ugly as is - may have to work on it - only including one conf.int seems to help - haven't rerun the plots though 
+
 
 #plot Taylor diagrams and compute stats for all species in species_list and plot google bubble plots
 strip = function(...) strip.default(...)
@@ -201,6 +212,7 @@ setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 png(filename = "Total_precipitation.png", width = 12 * 300, height = 9 * 300, res = 300)
 print(useOuterStrips(b1))
 dev.off()
+#need to fix colours 
 
 #make google maps of mean bias, etc for total precipitation 
 total_prcp_obs <- subset(total_prcp, data_source %in% "OBS")
@@ -231,12 +243,13 @@ d1 <- densityplot(~wd|site * campaign, data = met_ln,
                   plot.points=FALSE,
                   auto.key = T, 
                   strip.left = strip.custom(style=1, horizontal = F),
-                  par.settings = list(superpose.line = list(col = c("blue","black","purple","red"))),
+                  par.settings = list(superpose.line = list(col = "increment", lty = 2)),
                   from=0,to=360)
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 png(filename = "wd_densities.png", width = 12 * 300, height = 9 * 300, res = 300)
 print(useOuterStrips(d1))
 dev.off()
+#need to fix colours 
 
 #this is to plot the binned MB versus observations 
 #I still don't like the legend (I want three columns), and that the symbols are all open circles (hard to read in b/w)
@@ -255,9 +268,9 @@ for (t in 1:length(species_col)) {
   c <- densityplot(~ met[,species_col[t]]|campaign, data = met, plot.points=FALSE, col = "grey", from = 0, to = x_max, xlab = names(met[species_col[t]]))
    
   met$bin <- cut(met[,species_col[t]], breaks = x_breaks, labels = (seq(0, (x_max-x_1), by = x_1)))
-  stats_test <- modStats(met, obs = obs_species[t], mod = mod_species[t], type = c("data_source.mod", "campaign", "bin"))
+  stats_test <- modStats(met, obs = obs_species[t], mod = mod_species[t], type = c("data_source", "campaign", "bin"))
   stats_test$bin <- as.numeric(stats_test$bin)*x_1
-  b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source.mod, 
+  b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source, 
               xlab = names(met[species_col[t]]), auto.key = T, 
               panel =function(...){  
                 panel.xyplot(...);
@@ -268,16 +281,18 @@ for (t in 1:length(species_col)) {
   print(doubleYScale(c, b, use.style = F, add.ylab2 = T))
   dev.off()
 }
+#making make a plot for every site? 
 
-print(b)
+#investigate Q-Q plots (Alan's suggestion)
+for (k in 1:length(species_list_2)) {
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+  png(filename = paste(species_list_2[k],"quantiles.png", sep = '_'), width = 6 * 300, height = 6 * 300, res = 300)
+  conditionalQuantile(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("campaign", "data_source"), main = species_list_2[k])
+  dev.off()
+}
+#these are not bad - include them in plots to send modellers 
 
-#a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
- #              col = "grey90", xlab = names(met[species_col[t]]),
-  #             breaks = x_breaks,
-   #            scales = list(x = list(at = x_breaks)))
-    #           panel =function(...){  
-     #          panel.xyplot(...);
-      #         panel.superpose()})
+
 
 
 

@@ -87,3 +87,11 @@ oeh_obs <- rbind.fill(oeh_obs_MUMBA, oeh_obs_SPS1, oeh_obs_SPS2)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/")
 save(oeh_obs, oeh_obs_MUMBA, oeh_obs_SPS1, oeh_obs_SPS2, file = "OEH_obs.RData")
+
+
+
+#for Yang Zhang - make replacement individual csv files 
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/OEH data")
+write.csv(oeh_obs_MUMBA, file = "OEH_data_MUMBA.csv", row.names = F)
+write.csv(oeh_obs_SPS1, file = "OEH_data_SPS1.csv", row.names = F)
+write.csv(oeh_obs_SPS2, file = "OEH_data_SPS2.csv", row.names = F)

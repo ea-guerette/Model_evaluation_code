@@ -1,4 +1,5 @@
 #this script is to get CSIRO model output in 
+library(lubridate)
 
 #assign variables 
 campaign <- c("SPS1", "MUMBA")
@@ -35,7 +36,8 @@ site <- sort(site)
 date <- paste(data$Yr, data$Mth, data$Dy, sep = "-")
 date <- paste(date, data$Hr)
 date <- paste(date, ":00", sep = "")
-date <- strptime(date, "%Y-%m-%d %H:%M")#, tz = "Etc/GMT-10")
+date <- strptime(date, "%Y-%m-%d %H:%M", tz = "UTC") #supposed to be in Etc/GMT-10
+#date <- with_tz(date, tzone = "UTC") #trying this to fix tz issue 
 head(date)
 
 #add the date and site vectors/columns to the sps2_tapm dataframe
@@ -77,6 +79,14 @@ data$campaign <- campaign[i]
 dataframe_name <- paste0("csiro_",campaign[i]) 
 assign(dataframe_name,data)
 }
+
+#make some dummy SPS2 data so I can avoid issues when plotting things
+csiro_SPS2 <-data.frame(date = rep(seq(as.POSIXct("2012-04-16"), by = "hours", length = 696, tzone = "UTC"),11),
+                        data_source = rep("CSIRO", 696*11), campaign = rep("SPS2", 696*11), 
+                        site = c(sort(rep(levels(csiro_MUMBA$site),696)),rep("Williamtown_RAAF",696)), ws = rep(NA, 696*11))
+
+
 csiro <- rbind(csiro_MUMBA, csiro_SPS1)
+csiro <- rbind.fill(csiro, csiro_SPS2)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(csiro, csiro_MUMBA, csiro_SPS1, file = "CSIRO_model_output.RData")
