@@ -1,8 +1,8 @@
 #This is very similar to Figures_ANSTO_analysis, but in this one, I add all models for met evaluation
 #myColours <- c("#1B9E77", "#386CB0", "#666666","#FFB843", "#F42E3C", "#520066") #that purple is hard to distinguish from black 
-myColours <- c("#1B9E77", "#386CB0", "#000000","#FFB843", "#F42E3C", "#7570B3")
+#myColours <- c("#1B9E77", "#386CB0", "#000000","#FFB843", "#F42E3C", "#7570B3")
 myColours <- c("#1B9E77", "#386CB0", "#000000","#FF7F00", "#F42E3C", "#7570B3") #trying a more vibrant orange (less yellow)
-
+myColours_2 <-  c("#1B9E77", "#386CB0", "#FF7F00", "#F42E3C", "#7570B3") #for when there is no obs... 
 mylineTypes <- c("dashed","dotted","solid","dotdash","longdash","twodash")
 mylineWidths <- c(2,2,3,2,2,2)
 
@@ -32,8 +32,8 @@ BOM <- bom_data_all_campaigns
 models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model)
 site_list <- levels(as.factor(BOM$site))
 species_list <- c("temp", "RH", "ws","wd","u10", "v10", "prcp", "pblh", "SWR")
-species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10", "prcp") #, "pblh")
-species_names <- c("temperature", "RH (%)", "wind speed (m/s)", "wind direction",  "u wind", "v wind", "precip", "pblh", "SWR")
+species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10")#, "prcp") #, "pblh")
+species_names <- c(expression("temperature (" * degree * "C)"), "RH (%)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind", "precipitation (mm)", "pblh (m)", "SWR")
 campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
 date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
@@ -54,19 +54,22 @@ met <- merge(BOM, model_met, by = c("date", "site", "campaign"), suffixes = c(".
 BOM$data_source <- "OBS"
 met_ln <- rbind.fill(BOM, model_met)
 
-#plot diurnal cycles and time series for all species in species_list 
+#plot diurnal cycles and time series for all species in species_list (exclude Bellambi)
 for (i in 1:length(species_list)) {
-
-  d <- timeVariation(met_ln, pollutant = species_list[1], group = "data_source", type = "campaign", ci = F, ylab = species_names[1], key.columns = 3, col = myColours, lty = mylineTypes, lwd = mylineWidths)
+  d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   dev.off()
 }
+#these are for time series of hourly values - hard to read, not for paper 
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
   png(filename = paste(species_list[i],campaign[j],"timeseries.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
-  scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "campaign", plot.type = "l")#, main = campaign[j])
+  scatterPlot(selectByDate(subset(met_ln, site != "Bellambi"), start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], 
+              ylab = species_names[i], group = "data_source", type = "campaign", plot.type = "l",
+              col = myColours, lwd = mylineWidths,lty = mylineTypes,
+              key.position = "top", key.columns =3, key.title = "")#, main = campaign[j])
   dev.off()
   }
 }
@@ -75,35 +78,38 @@ for (i in 1:length(species_list)) {
 #need the same plots, for each site... 
 for (k in 1:length(site_list)) {
 for (i in 1:length(species_list)) {
-  
-  d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2, main = site_list[k])
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+    d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, 
+                       ylab = species_names[i], key.columns = 3, main = site_list[k], col = myColours, lty = mylineTypes, lwd = mylineWidths)
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/")
   png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
-  panel.text(0.15, 0.9, site_list[k], cex = 1, font = 1)
+  panel.text(0.15, 0.825, site_list[k], cex = 1, font = 1)
   trellis.unfocus()
   dev.off()
 }
 }
+
 for (i in 1:length(species_list)) {
-   
   for (j in 1:length(date_start)){
     png(filename = paste(species_list[i],campaign[j],"timeseries_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-    scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l", main = campaign[j])
+    scatterPlot(selectByDate(met_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l",
+                main = campaign[j], col = myColours, lwd = mylineWidths,lty = mylineTypes,
+                key.position = "top", key.columns =3, key.title = "")
     dev.off()
   }
 }
+
 #plot median instead of mean in overall diurnal plots
 for (i in 1:length(species_list)) {
   
-  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 2, statistic = "median", conf.int = 0.75)
+  d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, statistic = "median", conf.int = F,
+                     col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"median_diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   print(d, subset = "hour")
   dev.off()
 }
-
 
 #plot Taylor diagrams and compute stats for all species in species_list and plot google bubble plots
 strip = function(...) strip.default(...)
@@ -112,11 +118,12 @@ strip.left = strip.custom(style=1, horizontal = F)
 for (k in 1:length(species_list_2)){
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
    png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-   TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k]))
+   TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", 
+                 main = species_names[k], col = myColours_2)
   dev.off()
-  
+#colours are not the same here as for the other plots...   
   png(filename = paste(species_list_2[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-  TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = paste0(species_names[k]))
+  TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = species_names[k])
   dev.off()
     
   stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
@@ -127,7 +134,7 @@ for (k in 1:length(species_list_2)){
   a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
                          maptype = "roadmap", col = "jet", cex = 1, main = paste(species_list[k] , "-", stat_list[m] ),
                          key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
-  png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 6 * 300, height = 6 * 300, res = 300)
+  png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 8 * 300, height = 8 * 300, res = 300)
   print(useOuterStrips(a1$plot))
   dev.off()
 }
@@ -142,9 +149,9 @@ for (k in 1:length(species_list_2)){
 #make the same Taylor plots, but for each site... 
 for (j in 1:length(site_list)) {
 for (k in 1:length(species_list_2)){
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots")
   png(filename = paste(species_list_2[k],site_list[j],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-  TaylorDiagram(subset(met, site %in% site_list[j]), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k], "-", site_list[j]))
+  TaylorDiagram(subset(met, site %in% site_list[j]), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", main = paste0(species_names[k], "-", site_list[j]), col = myColours_2)
   dev.off()
   
   png(filename = paste(species_list[k],site_list[j],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
@@ -154,7 +161,7 @@ for (k in 1:length(species_list_2)){
 }
 
 #make Taylor plots for each model, showing all sites for each campaign 
-setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots")
 for (m in 1:length(model_list)) {
   for (k in 1:length(species_list_2)){
     png(filename = paste(species_list_2[k],model_list[m],"Taylor_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
@@ -162,13 +169,13 @@ for (m in 1:length(model_list)) {
   dev.off()
     }
 }
+#falls over because OEH does not have RH - run again with m in 5: and k in 3: 
+
 
 #make more stats 
-
 #overall stats, hourly values 
 for (k in 1:length(species_list_2)){
-stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
-
+stats <- modStats(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
 #save stats and rename dataframe
 stats_name <- paste0("stats_dom_avg_",species_list[k])
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
@@ -181,8 +188,7 @@ met_daily_sum <- timeAverage(met, avg.time = "1 day", statistic = "sum", type = 
 met_daily$prcp.mod <- met_daily_sum$prcp.mod
 met_daily$prcp.obs <- met_daily_sum$prcp.obs
 for (k in 1:length(species_list_2)){
-  stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
-  
+  stats <- modStats(subset(met_daily, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
   #save stats and rename dataframe
   stats_name <- paste0("daily_stats_dom_avg_",species_list[k])
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
@@ -192,27 +198,110 @@ for (k in 1:length(species_list_2)){
 
 for (k in 1:length(species_list_2)){
   stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
-  
   #save stats and rename dataframe
   stats_name <- paste0("daily_stats_",species_list[k])
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
   write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
   assign(stats_name,stats)
 }
+
+#plot daily timeseries 
+met_daily_ln <- timeAverage(met_ln, avg.time = "1 day", type = c("data_source","site","campaign"))
+met_daily_sum_ln <- timeAverage(met_ln, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign"))
+met_daily_ln$prcp <- met_daily_sum_ln$prcp
+
+for (i in 1:length(species_list)) {
+  for (j in 1:length(date_start)){
+    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/daily/")
+    png(filename = paste(species_list[i],campaign[j],"daily_timeseries.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+    scatterPlot(selectByDate(met_daily_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l",
+                main = campaign[j], col = myColours, lwd = mylineWidths,lty = mylineTypes,
+                key.position = "top", key.columns =3, key.title = "")
+    dev.off()
+  }
+}
+
+
+#plot timeseries of daily max temperature (and daily min?) and save stats 
+met_max <- timeAverage(met, avg.time = "1 day", statistic = "max", type = c("data_source","site","campaign"))
+for (k in 1:length(species_list_2)){
+  stats <- modStats(met_max, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
+  #save stats and rename dataframe
+  stats_name <- paste0("daily_max_stats_",species_list[k])
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+  write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+  assign(stats_name,stats)
+}
+met_max_ln <- timeAverage(met_ln, avg.time = "1 day", statistic = "max", type = c("data_source","site","campaign"))
+
+for (i in 1:length(species_list)) {
+  for (j in 1:length(date_start)){
+    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/daily max/")
+    png(filename = paste(species_list[i],campaign[j],"timeseries_max.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+    scatterPlot(selectByDate(met_max_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l",
+                main = campaign[j], col = myColours, lwd = mylineWidths,lty = mylineTypes,
+                key.position = "top", key.columns =3, key.title = "")
+    dev.off()
+  }
+}
+
+met_min <- timeAverage(met, avg.time = "1 day", statistic = "min", type = c("data_source","site","campaign"))
+for (k in 1:length(species_list_2)){
+  stats <- modStats(met_min, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
+  #save stats and rename dataframe
+  stats_name <- paste0("daily_min_stats_",species_list[k])
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+  write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+  assign(stats_name,stats)
+}
+met_min_ln <- timeAverage(met_ln, avg.time = "1 day", statistic = "min", type = c("data_source","site","campaign"))
+
+for (i in 1:length(species_list)) {
+  for (j in 1:length(date_start)){
+    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/daily min/")
+    png(filename = paste(species_list[i],campaign[j],"timeseries_min.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+    scatterPlot(selectByDate(met_min_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l",
+                main = campaign[j], col = myColours, lwd = mylineWidths,lty = mylineTypes,
+                key.position = "top", key.columns =3, key.title = "")
+    dev.off()
+  }
+}
+
+mysettings <- trellis.par.get()
+names(mysettings)
+mysettings$strip.background$col <- "white"
+mysettings$superpose.polygon$col <- myColours
+trellis.par.set(mysettings) 
+
+mystrip <- strip.custom(bg ="white")
+my.settings <- list(
+  superpose.polygon=list(col=myColours, border="black"),
+  strip.background=list(col="white"),
+  strip.border=list(col="black")
+)
+
 #It looks like daily is better for prcp than hourly - but what about campaign totals
 sums <- ddply(met_ln, .(site, campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp <- subset(sums, select = c("site", "campaign", "data_source", "prcp"))
 #try to plot this in a meaningful manner
 
-b1 <- barchart(total_prcp$prcp ~ total_prcp$data_source|total_prcp$site * total_prcp$campaign,
-         col = c("blue", "grey", "purple", "red"), ylab = "Total precipitaion (mm)", 
-         strip.left = strip.custom(style=1, horizontal = F),
-         par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
+
+#b1 <- update(b1, between = list(x = 0, y = 1))
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-png(filename = "Total_precipitation.png", width = 12 * 300, height = 9 * 300, res = 300)
-print(useOuterStrips(b1))
+png(filename = "Total_precipitation.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+trellis.par.set(mysettings) 
+b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
+               #col=myColours,
+               #superpose.polygon=list(col= myColours),
+               ylab = "Total precipitaion (mm)", 
+               #strip.left = strip.custom(style=1, horizontal = F),
+               auto.key = list(column = 3, space = "top"), 
+               par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
+#print(useOuterStrips(b1, strip = mystrip, strip.left = mystrip)) #useOuterStrips ignores specified strip parameters... 
+plot(b1, strip = mystrip)
 dev.off()
-#need to fix colours 
+
+
 
 #make google maps of mean bias, etc for total precipitation 
 total_prcp_obs <- subset(total_prcp, data_source %in% "OBS")
@@ -230,20 +319,23 @@ for (m in 1:length(stat_list_2)) {
                        maptype = "roadmap", col = "jet", cex = 1, main = paste("Total precipitation", "-", stat_list_2[m]),
                        key.footer = stat_list_2[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source.mod"))
   png(filename = paste("Total_precipitation", stat_list_2[m],"map.png", sep = '_'), width = 6 * 300, height = 6 * 300, res = 300)
-  print(useOuterStrips(a1$plot))
+  print(useOuterStrips(a1$plot,strip = mystrip, strip.left = mystrip))
   dev.off()
 }
 #save stats as data.frame
-stats_total_prcp <- stats
+stats_name <- "stats_total_prcp"
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+assign(stats_name,stats)
+
 
 #as I prepared plots for ANSTO comparison, I thought of this: 
-
 d1 <- densityplot(~wd|site * campaign, data = met_ln,
                   groups = data_source,
                   plot.points=FALSE,
                   auto.key = T, 
                   strip.left = strip.custom(style=1, horizontal = F),
-                  par.settings = list(superpose.line = list(col = "increment", lty = 2)),
+                  par.settings = list(superpose.line = list(col = myColours, lty = mylineTypes, lwd = mylineWidths)),
                   from=0,to=360)
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 png(filename = "wd_densities.png", width = 12 * 300, height = 9 * 300, res = 300)
@@ -281,7 +373,7 @@ for (t in 1:length(species_col)) {
   print(doubleYScale(c, b, use.style = F, add.ylab2 = T))
   dev.off()
 }
-#making make a plot for every site? 
+#make a plot for every site? 
 
 #investigate Q-Q plots (Alan's suggestion)
 for (k in 1:length(species_list_2)) {

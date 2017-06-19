@@ -76,6 +76,7 @@ for (i in 1:length(campaign)) {
   names(data)[c(3,4,5,6,8,10,11,9)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
   #make prcp in mm 
   data$prcp <- data$prcp*10
+  data$prcp[data$prcp < 0] <- NA #to remove negative values close to spin up periods 
   data$temp <- data$temp - 273.15 
   #add campaign tag
   data$campaign <- campaign[i]
