@@ -54,14 +54,33 @@ met <- merge(BOM, model_met, by = c("date", "site", "campaign"), suffixes = c(".
 BOM$data_source <- "OBS"
 met_ln <- rbind.fill(BOM, model_met)
 
+#settings for lattice plotting
+original.settings <- trellis.par.get()
+my.settings <- trellis.par.get()
+names(my.settings)
+my.settings$superpose.line$col = myColours  
+my.settings$superpose.line$lty = mylineTypes
+my.settings$superpose.line$lwd = mylineWidths
+my.settings$superpose.polygon$col = myColours
+my.settings$superpose.symbol$col = myColours_2
+my.settings$superpose.symbol$pch = c(16:21)
+my.settings$strip.background$col <- "white"
+#trellis.par.set(my.settings) #need to include this inside the graphing device if I want white strips and the right colours 
+#no good because it changes the default settings - but necessary for timeVariation... 
+
+mystrip <- strip.custom(bg ="white")
+
 #plot diurnal cycles and time series for all species in species_list (exclude Bellambi)
 for (i in 1:length(species_list)) {
-  d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+  d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
   png(filename = paste(species_list[i],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
   print(d, subset = "hour")
   dev.off()
-}
+} 
+trellis.par.set(original.settings)
+
 #these are for time series of hourly values - hard to read, not for paper 
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
@@ -82,6 +101,7 @@ for (i in 1:length(species_list)) {
                        ylab = species_names[i], key.columns = 3, main = site_list[k], col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/")
   png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
   print(d, subset = "hour")
   trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
   panel.text(0.15, 0.825, site_list[k], cex = 1, font = 1)
@@ -89,6 +109,7 @@ for (i in 1:length(species_list)) {
   dev.off()
 }
 }
+trellis.par.set(original.settings)
 
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
@@ -107,9 +128,11 @@ for (i in 1:length(species_list)) {
                      col = myColours, lty = mylineTypes, lwd = mylineWidths)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   png(filename = paste(species_list[i],"median_diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
   print(d, subset = "hour")
   dev.off()
 }
+trellis.par.set(original.settings)
 
 #plot Taylor diagrams and compute stats for all species in species_list and plot google bubble plots
 strip = function(...) strip.default(...)
@@ -135,7 +158,7 @@ for (k in 1:length(species_list_2)){
                          maptype = "roadmap", col = "jet", cex = 1, main = paste(species_list[k] , "-", stat_list[m] ),
                          key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
   png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 8 * 300, height = 8 * 300, res = 300)
-  print(useOuterStrips(a1$plot))
+  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
   dev.off()
 }
   #save stats and rename dataframe
@@ -267,29 +290,16 @@ for (i in 1:length(species_list)) {
   }
 }
 
-mysettings <- trellis.par.get()
-names(mysettings)
-mysettings$strip.background$col <- "white"
-mysettings$superpose.polygon$col <- myColours
-trellis.par.set(mysettings) 
-
-mystrip <- strip.custom(bg ="white")
-my.settings <- list(
-  superpose.polygon=list(col=myColours, border="black"),
-  strip.background=list(col="white"),
-  strip.border=list(col="black")
-)
 
 #It looks like daily is better for prcp than hourly - but what about campaign totals
 sums <- ddply(met_ln, .(site, campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp <- subset(sums, select = c("site", "campaign", "data_source", "prcp"))
 #try to plot this in a meaningful manner
 
-
 #b1 <- update(b1, between = list(x = 0, y = 1))
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 png(filename = "Total_precipitation.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
-trellis.par.set(mysettings) 
+trellis.par.set(my.settings) 
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
                #col=myColours,
                #superpose.polygon=list(col= myColours),
@@ -300,8 +310,6 @@ b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = tota
 #print(useOuterStrips(b1, strip = mystrip, strip.left = mystrip)) #useOuterStrips ignores specified strip parameters... 
 plot(b1, strip = mystrip)
 dev.off()
-
-
 
 #make google maps of mean bias, etc for total precipitation 
 total_prcp_obs <- subset(total_prcp, data_source %in% "OBS")
@@ -318,7 +326,7 @@ for (m in 1:length(stat_list_2)) {
   a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list_2[m],
                        maptype = "roadmap", col = "jet", cex = 1, main = paste("Total precipitation", "-", stat_list_2[m]),
                        key.footer = stat_list_2[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source.mod"))
-  png(filename = paste("Total_precipitation", stat_list_2[m],"map.png", sep = '_'), width = 6 * 300, height = 6 * 300, res = 300)
+  png(filename = paste("Total_precipitation", stat_list_2[m],"map.png", sep = '_'), width = 8 * 300, height = 8 * 300, res = 300)
   print(useOuterStrips(a1$plot,strip = mystrip, strip.left = mystrip))
   dev.off()
 }
@@ -328,52 +336,78 @@ setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
 write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
 assign(stats_name,stats)
 
-
 #as I prepared plots for ANSTO comparison, I thought of this: 
-d1 <- densityplot(~wd|site * campaign, data = met_ln,
-                  groups = data_source,
-                  plot.points=FALSE,
-                  auto.key = T, 
-                  strip.left = strip.custom(style=1, horizontal = F),
-                  par.settings = list(superpose.line = list(col = myColours, lty = mylineTypes, lwd = mylineWidths)),
-                  from=0,to=360)
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-png(filename = "wd_densities.png", width = 12 * 300, height = 9 * 300, res = 300)
-print(useOuterStrips(d1))
+png(filename = "wd_densities.png", width = 15 * 300, height = 12 * 300, res = 300)
+to_exclude <- rownames(subset(met_ln, campaign %in% "SPS2" & data_source == "CSIRO")) #this is because the NAs make it fall over 
+d1 <- densityplot(~wd|site*campaign, 
+                  data = met_ln[-c(to_exclude[1]:to_exclude[length(to_exclude)]),],
+                  groups = data_source, #why is this broken? is this because I have missing data?
+                  plot.points=FALSE,
+                  auto.key = list(column = 3, space = "top"), 
+                  par.settings = list(superpose.line = list(col = myColours, lty = mylineTypes, lwd = mylineWidths)),#, strip.background = list(col = "white)")),
+                  strip.left = strip.custom(style=1, horizontal = F, bg = "white"),
+                  from=0, to=360) #na.rm =T) # does not work 
+print(useOuterStrips(d1, strip = mystrip, strip.left = mystrip))
 dev.off()
-#need to fix colours 
+
+#repeat this, but excluding low wind speeds as wd is more uncertain at low wind speeds 
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+png(filename = "wd_densities_low_ws_excluded.png", width = 15 * 300, height = 12 * 300, res = 300)
+to_exclude <- rownames(subset(met_ln, campaign %in% "SPS2" & data_source == "CSIRO")) #this is because the NAs make it fall over 
+d1 <- densityplot(~wd|site*campaign, 
+                  data = subset(met_ln[-c(to_exclude[1]:to_exclude[length(to_exclude)]),], ws>2),
+                  groups = data_source, #why is this broken? is this because I have missing data?
+                  plot.points=FALSE,
+                  auto.key = list(column = 3, space = "top"), 
+                  par.settings = list(superpose.line = list(col = myColours, lty = mylineTypes, lwd = mylineWidths)),#, strip.background = list(col = "white)")),
+                  strip.left = strip.custom(style=1, horizontal = F, bg = "white"),
+                  from=0, to=360) #na.rm =T) # does not work 
+print(useOuterStrips(d1, strip = mystrip, strip.left = mystrip))
+dev.off()
+#this is slightly wrong - ideally, you want to exclude only OBSERVED wind speeds <2m/s 
+#(at the moment, the subsetting removes modeled values as well) 
 
 #this is to plot the binned MB versus observations 
 #I still don't like the legend (I want three columns), and that the symbols are all open circles (hard to read in b/w)
 #I also need to fix the x axis labelling 
-species_col <- c(4,7)
-obs_species <- c("temp.obs", "ws.obs")
-mod_species <- c("temp.mod","ws.mod")
+species_col <- c(4,7,8)
+obs_species <- c("temp.obs", "ws.obs", "wd.obs")
+mod_species <- c("temp.mod","ws.mod","wd.mod")
+x_labels <- c("observed temperature", "observed wind speed", "observed wind direction")
+add_line <- c(2,1.5,30)
+#exclude Bellambi 
+met_sub <- subset(met, site!="Bellambi")
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 for (t in 1:length(species_col)) {
-  x_1 <- floor((max(met[,species_col[t]], na.rm = T) - min(met[,species_col[t]], na.rm = T))/10)
-  x_max <- ceiling(max(met[,species_col[t]], na.rm = T)/x_1) * x_1
+  png(filename = paste(names(met_sub[species_col[t]]),"mb_by_bin.png", sep = "_"), width = 9 * 300, height = 5 * 300, res = 300)
+  x_1 <- floor((max(met_sub[,species_col[t]], na.rm = T) - min(met_sub[,species_col[t]], na.rm = T))/10)
+  x_max <- ceiling(max(met_sub[,species_col[t]], na.rm = T)/x_1) * x_1
   x_breaks <- c(0, seq(x_1, x_max, by = x_1))
  # a <- histogram(~ met[,species_col[t]]|campaign, data = met, #endpoints = c(0,ceiling(max(met[,species_col[t]], na.rm = T))),
  #             col = "grey90", xlab = names(met[species_col[t]]),
  #              breaks = x_breaks,
  #             scales = list(x = list(at = x_breaks)))
-  c <- densityplot(~ met[,species_col[t]]|campaign, data = met, plot.points=FALSE, col = "grey", from = 0, to = x_max, xlab = names(met[species_col[t]]))
+  c <- densityplot(~ met_sub[,species_col[t]]|campaign, data = met_sub, plot.points=FALSE, col = "grey", from = 0, to = x_max, xlab = x_labels[t])
    
-  met$bin <- cut(met[,species_col[t]], breaks = x_breaks, labels = (seq(0, (x_max-x_1), by = x_1)))
-  stats_test <- modStats(met, obs = obs_species[t], mod = mod_species[t], type = c("data_source", "campaign", "bin"))
+  met_sub$bin <- cut(met_sub[,species_col[t]], breaks = x_breaks, labels = (seq(0, (x_max-x_1), by = x_1)))
+  stats_test <- modStats(met_sub, obs = obs_species[t], mod = mod_species[t], type = c("data_source", "campaign", "bin"))
   stats_test$bin <- as.numeric(stats_test$bin)*x_1
   b <- xyplot(MB ~ bin|campaign, data = stats_test, groups = data_source, 
-              xlab = names(met[species_col[t]]), auto.key = T, 
+              xlab = x_labels[t],  
+              auto.key = list(column = 3, space = "top"), 
+              par.settings = my.settings,
+              scales = list(alternating = 1),
               panel =function(...){  
                 panel.xyplot(...);
-                panel.abline(h = 0, col = "blue", lty = 2)
+                panel.abline(h = c(0,add_line[t],-(add_line[t])), col = c("blue","red", "red"), lty = c(2,3,3))
               })
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-  png(filename = paste(names(met[species_col[t]]),"mb_by_bin.png", sep = "_"), width = 9 * 300, height = 5 * 300, res = 300)
-  print(doubleYScale(c, b, use.style = F, add.ylab2 = T))
-  dev.off()
+   print(doubleYScale(b, c, use.style = F, add.ylab2 = T,auto.key = list(column = 3, space = "top")))
+   #update(b2, strip = mystrip)#, auto.key = list(column = 3, space = "top"))
+   #update(b2, strip = mystrip)
+   dev.off()
 }
-#make a plot for every site? 
+#make a plot for every site? not sure, not easy! 
 
 #investigate Q-Q plots (Alan's suggestion)
 for (k in 1:length(species_list_2)) {
@@ -383,6 +417,9 @@ for (k in 1:length(species_list_2)) {
   dev.off()
 }
 #these are not bad - include them in plots to send modellers 
+
+
+
 
 
 
