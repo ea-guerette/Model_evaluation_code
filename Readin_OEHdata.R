@@ -3,7 +3,7 @@
 #also, I think I was loading an old one - the site names are now OK straight off "oeh_data_2011_2013_long.RData" 
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-load("oeh_data_2011_2013_long.RData")
+load("oeh_data_2011_2013_long.RData") #made using OEH_data_formatting
 
 #load packages and functions
 library(openair)
@@ -31,9 +31,9 @@ date_end <- c("2013-02-15 23:00:00","2011-03-06 23:00:00","2012-05-13 23:00:00")
 for (i in 1:length(campaign)) {
   data <- subset(oeh_data_2011_2013_long_sub, date >= as.POSIXct(date_start[i], tz = "Etc/GMT-10") & date <= as.POSIXct(date_end[i],tz = "Etc/GMT-10"))
   data$campaign <- campaign[i]
-  data$data_source <- 'OBS'
+  #data$data_source <- 'OBS'
   #names(data)[c(7,8,10,12,13,15)] <- c("NOx", "O3", "PM2.5", "temp", "wd", "ws")
-  #data <- transform(data, NO = NO*10, NO2 = NO2*10, NOx = NOx*10, O3 = O3*10, SO2 = SO2*10, CO = CO*1000) 
+  data <- transform(data, CO = CO*1000) #not done in OEH_data_formatting
   
 #need to add Westmead manually for SPS1 and SPS2 - units already in ppb (inc. CO)
   if (i >= 2 & i <= 3 ) {
@@ -69,7 +69,7 @@ for (i in 1:length(campaign)) {
   
   ##add site and data_source info 
   westmead$site <- "Westmead"
-  westmead$data_source <- "OBS"
+  #westmead$data_source <- "OBS"
   westmead$campaign <- campaign[i]
   westmead <- subset(westmead, select = -Time)
 

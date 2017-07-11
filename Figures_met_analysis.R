@@ -81,6 +81,26 @@ for (i in 1:length(species_list)) {
 } 
 trellis.par.set(original.settings)
 
+#plot diurnal difference for all species in species_list (exclude Bellambi) DOES NOT WORK with grouping variable 
+#for (i in 1:length(species_list)) {
+#  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+#  d <- timeVariation(subset(met, site != "Bellambi"), pollutant = c(paste0(species_list[i], ".obs"), paste0(species_list[i], ".mod")), group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
+#  png(filename = paste(species_list[i],"diurnal_differences.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+#  trellis.par.set(my.settings)
+#  print(d, subset = "hour")
+#  dev.off()
+#} 
+#trellis.par.set(original.settings)
+
+#this is to plot water content 
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = "W", group = "data_source", type = "campaign", ci = F, ylab = "water content", key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
+png(filename = "water_diurnal.png", width = 6 * 300, height = 4 * 300, res = 300)
+trellis.par.set(my.settings)
+print(d, subset = "hour")
+dev.off()
+#looks odd - not including it in preliminary evaluation - need to double check calculation of W from BOM data
+
 #these are for time series of hourly values - hard to read, not for paper 
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
@@ -294,6 +314,7 @@ for (i in 1:length(species_list)) {
 #It looks like daily is better for prcp than hourly - but what about campaign totals
 sums <- ddply(met_ln, .(site, campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp <- subset(sums, select = c("site", "campaign", "data_source", "prcp"))
+
 #try to plot this in a meaningful manner
 
 #b1 <- update(b1, between = list(x = 0, y = 1))
@@ -332,6 +353,21 @@ for (m in 1:length(stat_list_2)) {
 }
 #save stats as data.frame
 stats_name <- "stats_total_prcp"
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
+write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
+assign(stats_name,stats)
+
+#also need the overall (domain averaged stats...)
+sums_dom <- ddply(met_ln, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
+total_prcp_dom <- subset(sums_dom, select = c("campaign", "data_source", "prcp"))
+
+#make google maps of mean bias, etc for total precipitation 
+total_prcp_dom_obs <- subset(total_prcp_dom, data_source %in% "OBS")
+total_prcp_dom_models <- subset(total_prcp_dom, data_source != "OBS")
+total_prcp_dom_wide <- merge(total_prcp_dom_obs, total_prcp_dom_models, by = "campaign", suffixes = c(".obs", ".mod", all = T))
+
+stats <- modStats(total_prcp_dom_wide, mod = "prcp.mod", obs = "prcp.obs", type = c("data_source.mod", "campaign"))
+stats_name <- "stats_dom_avg_total_prcp"
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
 write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
 assign(stats_name,stats)

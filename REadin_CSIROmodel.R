@@ -47,9 +47,9 @@ data <- cbind(date, data, site)
 ##remove the cell_ prefix 
 names(data) <- stri_replace_all_fixed(names(data), "cell_", "" )
 #take out useless columns 
-data <- data[-c(2,3,4,5,6,7)]
+data <- data[-c(2,3,4,5,6)]
 #fix the met data names - give them the same names as for the other models #using pbenz and ptol in this 
-names(data)[c(54,55,56,57,58,59,7,8,9,10,11,12,14,15,16)] <- c("ws", "wd", "temp", "RH", "pblh", "prcp", 
+names(data)[c(55,56,57,58,59,60,8,9,10,11,12,13,15,16,17)] <- c("ws", "wd", "temp", "RH", "pblh", "prcp", 
                                                                "HCHO","Methanol", "C5H8", "IsopRxnProd","Terpenes","CH3CHO",
                                                                "Toluene", "Xylenes", "Benzene" )
 
