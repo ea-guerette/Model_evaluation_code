@@ -25,7 +25,7 @@ oeh_data_2011_2013_long_sub <- subset(oeh_data_2011_2013_long, site %in% site_li
 
 #assign variables to select correct periods 
 campaign <- c("MUMBA","SPS1", "SPS2")
-date_start <- c("2012-12-21","2011-02-07", "2012-04-16")
+date_start <- c("2013-01-01","2011-02-07", "2012-04-16")
 date_end <- c("2013-02-15 23:00:00","2011-03-06 23:00:00","2012-05-13 23:00:00") 
 
 for (i in 1:length(campaign)) {
@@ -92,6 +92,11 @@ save(oeh_obs, oeh_obs_MUMBA, oeh_obs_SPS1, oeh_obs_SPS2, file = "OEH_obs.RData")
 
 #for Yang Zhang - make replacement individual csv files 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/OEH data")
-write.csv(oeh_obs_MUMBA, file = "OEH_data_MUMBA.csv", row.names = F)
+write.csv(oeh_obs_MUMBA_up, file = "OEH_data_MUMBA.csv", row.names = F)
 write.csv(oeh_obs_SPS1, file = "OEH_data_SPS1.csv", row.names = F)
-write.csv(oeh_obs_SPS2, file = "OEH_data_SPS2.csv", row.names = F)
+oeh_obs_SPS2_up <- subset(oeh_obs_SPS2_up, select = -SWR)
+names(oeh_obs_SPS2_up)
+write.csv(oeh_obs_SPS2_up, file = "OEH_data_SPS2.csv", row.names = F)
+
+#for Steve 
+write.csv(bom_data_mumba, row.names = F, file = "BOM_data_MUMBA.csv")

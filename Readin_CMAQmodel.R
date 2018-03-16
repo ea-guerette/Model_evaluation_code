@@ -4,11 +4,12 @@
 library(ncdf4)
 library(stringi)
 library(reshape2)
-
+library(openair)
 
 #assign variables
-campaign <- c("SPS1", "SPS2", "MUMBA")
-
+campaign <- c("MUMBA","SPS1", "SPS2")
+#start_date <- c("2012-12-31 14:00 UTC","2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
+#end_date <- c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
 #go to folder containing model output 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/WASPSS_CMAQ_WRFCHEMemis/")
 
@@ -17,7 +18,7 @@ for (i in 1:length(campaign)) {
   
     fname <- paste0("cmaq_chem_aer_met_d04_",campaign[i],".nc")
     ncin <- nc_open(fname)
-    
+    #print(ncin)
     #create a date vector 
     time <- ncvar_get(ncin,"time")
     time = time*3600 #*3600 because R expect time in seconds since, not hours since (but is this conversion OK?)
@@ -80,6 +81,8 @@ for (i in 1:length(campaign)) {
     
     #add campaign tag
     data$campaign <- campaign[i]
+    #cut data to length
+    #data <- subset(data, date >= start_date[i] & date <= end_date[i])
     
     #add site info to dataframe
     data <- merge(data, site_info, by = "site")
@@ -87,7 +90,7 @@ for (i in 1:length(campaign)) {
     #save the dataframe as something else 
     dataframe_name <- paste0("cmaq_",campaign[i]) 
     assign(dataframe_name,data)
-    
+    timePlot(data, pollutant = "temp", type = "site")
   }
 
 
@@ -96,7 +99,7 @@ cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output.RData")
+save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output_new.RData")
 save(site_info, file = "site_info.Rdata")
 
-load("CMAQ_model_output.RData")
+load("CMAQ_model_output_new.RData")

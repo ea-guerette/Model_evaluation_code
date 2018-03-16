@@ -17,9 +17,9 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Cam
 load("BOM_data_updated.RData")
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 load("ANSTO_model_output.RData")
-load("CMAQ_model_output.RData")
-load("WRFCHEM_model_output.RData")
-load("CSIRO_model_output.RData")
+load("CMAQ_model_output_new.RData")
+load("WRFCHEM_model_output_new.RData")
+load("CSIRO_model_output_new.RData")
 load("OEH_model_output.RData")
 load("site_info.RData")
 
@@ -35,14 +35,28 @@ species_list <- c("temp", "RH", "ws","wd","u10", "v10", "prcp", "pblh", "SWR")
 species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10")#, "prcp") #, "pblh")
 species_names <- c(expression("temperature (" * degree * "C)"), "RH (%)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind", "precipitation (mm)", "pblh (m)", "SWR")
 campaign <- c("MUMBA","SPS1", "SPS2")
-date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
-date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
+date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
+date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 stat_list <- c("r", "RMSE", "MB")
 #model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
 model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
 
 #select sites 
 model_met <- subset(models, site %in% site_list)
+#select dates #tried a loop but it did not work - not sure why:
+#model <- subset(subset(model_met, campaign %in% campaign[d]), date >= start_date[d] & date <= end_date[d])
+#start_date <- c("2012-12-31 14:00 UTC","2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
+#end_date <- c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
+#campaign <- c("MUMBA","SPS1", "SPS2" ) # repeated
+mumba_mod <- subset(model_met, campaign %in% "MUMBA")
+mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+sps1_mod <- subset(model_met, campaign %in% "SPS1")
+sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+sps2_mod <- subset(model_met, campaign %in% "SPS2")
+sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+
+model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
+
 
 #create site info 
 #site_info <- data.frame(site = model_met$site, site_lat = model_met$site_lat, site_lon = model_met$site_lon)
@@ -58,10 +72,10 @@ met_ln <- rbind.fill(BOM, model_met)
 original.settings <- trellis.par.get()
 my.settings <- trellis.par.get()
 names(my.settings)
-my.settings$superpose.line$col = myColours  
+my.settings$superpose.line$col = myColours_2  
 my.settings$superpose.line$lty = mylineTypes
 my.settings$superpose.line$lwd = mylineWidths
-my.settings$superpose.polygon$col = myColours
+my.settings$superpose.polygon$col = myColours_2
 my.settings$superpose.symbol$col = myColours_2
 my.settings$superpose.symbol$pch = c(16:21)
 my.settings$strip.background$col <- "white"
@@ -154,20 +168,39 @@ for (i in 1:length(species_list)) {
 }
 trellis.par.set(original.settings)
 
-#plot Taylor diagrams and compute stats for all species in species_list and plot google bubble plots
+#same, but for each site 
+for (k in 1:length(site_list)) {
+  for (i in 1:length(species_list)) {
+    d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, statistic = "median",
+                       ylab = species_names[i], key.columns = 3, main = site_list[k], col = myColours, lty = mylineTypes, lwd = mylineWidths)
+    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/median_cycles/")
+    png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+    trellis.par.set(my.settings)
+    print(d, subset = "hour")
+    trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+    panel.text(0.15, 0.825, site_list[k], cex = 1, font = 1)
+    trellis.unfocus()
+    dev.off()
+  }
+}
+trellis.par.set(original.settings)
+
+
+
+
 strip = function(...) strip.default(...)
 strip.left = strip.custom(style=1, horizontal = F)
 
 for (k in 1:length(species_list_2)){
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-   png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-   TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", 
-                 main = species_names[k], col = myColours_2)
-  dev.off()
+#   png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+#   TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", 
+#                 main = species_names[k], col = myColours_2)
+#  dev.off()
 #colours are not the same here as for the other plots...   
-  png(filename = paste(species_list_2[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-  TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = species_names[k])
-  dev.off()
+#  png(filename = paste(species_list_2[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+#  TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = species_names[k])
+#  dev.off()
     
   stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
   #merge stats with site info... (lost when applying modStats)
@@ -324,7 +357,7 @@ trellis.par.set(my.settings)
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
                #col=myColours,
                #superpose.polygon=list(col= myColours),
-               ylab = "Total precipitaion (mm)", 
+               ylab = "Total precipitaion (mm)", ylim = c(0,500),
                #strip.left = strip.custom(style=1, horizontal = F),
                auto.key = list(column = 3, space = "top"), 
                par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
@@ -411,7 +444,7 @@ species_col <- c(4,7,8)
 obs_species <- c("temp.obs", "ws.obs", "wd.obs")
 mod_species <- c("temp.mod","ws.mod","wd.mod")
 x_labels <- c("observed temperature", "observed wind speed", "observed wind direction")
-add_line <- c(2,1.5,30)
+add_line <- c(1,1.5,30)
 #exclude Bellambi 
 met_sub <- subset(met, site!="Bellambi")
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")

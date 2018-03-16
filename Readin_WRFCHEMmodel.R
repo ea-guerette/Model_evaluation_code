@@ -7,20 +7,26 @@ library(reshape2)
 
 
 #assign variables
-campaign <- c("SPS1", "SPS2", "MUMBA")
+campaign <- c("MUMBA","SPS1", "SPS2")
+#start_date <- c("2013-01-01 01:00 UTC","2011-02-07 01:00 UTC", "2012-04-16 01:00 UTC") 
+#end_date <- c("2013-02-16 00:00 UTC","2011-03-07 00:00 UTC","2012-05-14 00:00 UTC") 
+#had to modify those dates on the fly at CASANZ - not sure why it wasn't working 
 
 #go to folder containing model output 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/Sydney_wrf_corrected/")
+#setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/Sydney_wrf_corrected/")
+#setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/wrf_chem/")
+setwd("C:/Users/eag873/owncloud/wrf_chem/")
 
 for (i in 1:length(campaign)) {
   
-  fname <- paste0("wrf_chem_aer_d04_",campaign[i],".nc")
+# fname <- paste0("wrf_chem_aer_d04_",campaign[i],".nc")
+  fname <- paste0("wrf_chem_aer_met_d04_",campaign[i],"_bin_emis.nc")
   ncin <- nc_open(fname)
   
   #create a date vector 
   time <- ncvar_get(ncin,"time")
   time = time*3600 #*3600 because R expect time in seconds since, not hours since (but is this conversion OK?)
-  date <- as.POSIXct(time, origin = "2000-01-01 00:00:00", tz = "UTC")
+  date <- as.POSIXct(time, origin = "2000-01-01 00:00:00 UTC", tz = "UTC")
   
   #get site info variables in 
   site_name <- ncvar_get(ncin, "site_name")
@@ -75,11 +81,14 @@ for (i in 1:length(campaign)) {
   data$data_source <- "WRF-Chem"
   names(data)[c(3,4,5,6,8,10,11,9)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
   #make prcp in mm 
-  data$prcp <- data$prcp*10
+  #data$prcp <- data$prcp*10 #data is already in mm, not cm 
   data$prcp[data$prcp < 0] <- NA #to remove negative values close to spin up periods 
   data$temp <- data$temp - 273.15 
+  data$pres <- data$pres / 1000
   #add campaign tag
   data$campaign <- campaign[i]
+  #cut data to length
+  #data <- subset(data, date >= start_date[i] & date <= end_date[i])
   
   #add site info to dataframe
   data <- merge(data, site_info, by = "site")
@@ -87,7 +96,7 @@ for (i in 1:length(campaign)) {
   #save the dataframe as something else 
   dataframe_name <- paste0("wrf_chem_",campaign[i]) 
   assign(dataframe_name,data)
-  
+  #timePlot(data, pollutant = "PM2.5", type = "site")
 }
 
 
@@ -96,4 +105,5 @@ wrf_chem <- rbind(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA,wrf_chem, file = "WRFCHEM_model_output.RData")
+save(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA,wrf_chem, file = "WRFCHEM_model_output_new.RData")
+

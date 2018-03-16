@@ -2,9 +2,13 @@
 
 #load packages
 library(stringi)
-
+library(plyr)
 #assign variables
+
 campaign <- c("SPS1", "SPS2")
+#start_date <- c("2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
+#end_date <- c("2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
+
 
 for (i in 1:length(campaign)) {
 #go to folder: 
@@ -72,11 +76,19 @@ data$NOx <- data$NO + data$NO2
 data$data_source <- "OEH"
 data$campaign <- campaign[i]
 
+#cut to length 
+#data <- subset(data, date >= start_date[i] & date <= end_date[i])
+
 #save dataframe
 dataframe_name <- paste0("oeh_model_",campaign[i]) 
 assign(dataframe_name,data)
-
+timePlot(data, pollutant = "O3", type = "site")
 }
+
+#MUMBA output needs work - Khalia says the issue may be in the processing of the met results
+#which means that the modelling itself may be salvageable -BUT EXCLUDE FOR NOW (as requested by OEH)
+#easiest is probably to read it in, then only keep essentials + rbind.fill with SPS1, SPS2
+
 
 #MUMBA output is messy, so I have to code it separately 
 #the output for the actual MUMBA site is different from that of the other sites 
@@ -113,6 +125,7 @@ dataframe_name <- paste0("oeh_model_mumba_site_",j)
 assign(dataframe_name,data)
 }
 oeh_model_MUMBA_site <- rbind(oeh_model_mumba_site_1, oeh_model_mumba_site_2)
+timePlot(oeh_model_MUMBA_site, pollutant = "temp") #looks wrong! 
 
 #now, read in the other files... again, two folders 
 start_date <- c("2013-01-01","2013-02-01")
@@ -167,6 +180,14 @@ oeh_model_other_sites <- rbind(oeh_model_OEHsites_CTMjan13, oeh_model_OEHsites_C
 
 #make a MUMBA dataframe 
 oeh_model_mumba <- rbind.fill(oeh_model_MUMBA_site, oeh_model_other_sites)
+
+#cut it to length 
+#oeh_model_mumba <- subset(oeh_model_mumba, date >= "2013-01-01" & date <= "2013-02-15 13:00")
+
+#replace oeh_model_mumba with dummy data 
+names(oeh_model_mumba)
+oeh_model_mumba <- subset(oeh_model_mumba, select = c("date", "site","campaign","data_source"))
+oeh_model_mumba$ws <- NA
 
 #combine campaigns 
 oeh_model <- rbind.fill(oeh_model_SPS1, oeh_model_SPS2, oeh_model_mumba)

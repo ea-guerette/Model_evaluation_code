@@ -1,9 +1,10 @@
 ##This script was given to me by Khalia Monk
 ##This script extracts one minute data from BOM and saves is as hourly averages in csv format
 #modified to fix precipitation - needed to sum, not average over the hour 
-#added pressure and a calculation of W (water mixing ratio)
+#added pressure and a calculation of W (water mixing ratio) - needs checking
 #modified for tzone
 #05/2017 - adding Bellambi and Wollongong Airport + fixed campaign dates
+#02/2018 - modified again? - I think the start/end dates may be one minute off? leave it for now
 
 # SET WORKING DIRECTORY #
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute")
@@ -180,6 +181,7 @@ bom_data_mumba <- do.call(rbind, bom_data) #third campaign
 bom_data_mumba$date <- as.POSIXct(bom_data_mumba$date, format = "%Y-%m-%d %H:%M:%S", tz = "Etc/GMT-10")
 #add campaign tag
 bom_data_mumba$campaign <- "MUMBA"
+bom_data_mumba <-subset(bom_data_mumba, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC" )
 
 timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 

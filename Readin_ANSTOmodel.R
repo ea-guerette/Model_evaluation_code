@@ -5,14 +5,14 @@ library(ncdf4)
 library(stringi)
 library(reshape2)
 
-
 #assign variables
-campaign <- c("SPS1", "SPS2", "MUMBA")
+#start_date <- c("2012-12-31 14:00 UTC","2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
+#end_date <- c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
+campaign <- c("MUMBA","SPS1", "SPS2" )
 config <- c("10", "11")
 
 #go to folder containing model output 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/waspss-ansto/timeseries_extract_2")
-
 
 for (i in 1:length(campaign)) {
   for (ii in 1:length(config)){
@@ -87,6 +87,8 @@ data$wd[ids] = data$wd[ids] + 360
 
 #add campaign tag
 data$campaign <- campaign[i]
+#cut to length
+#data <- subset(data, date >= start_date[i] & date <= end_date[i])
 
 #add site info to dataframe
 data <- merge(data, site_info, by = "site")
@@ -94,10 +96,9 @@ data <- merge(data, site_info, by = "site")
 #save the dataframe as something else 
 dataframe_name <- paste0("wrf_",config[ii],"_",campaign[i]) 
 assign(dataframe_name,data)
-
+timePlot(data, pollutant = "temp", type = "site")
   }
 }
-
 
 #create one large dataframe containing all six files 
 wrf <- rbind(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2)
