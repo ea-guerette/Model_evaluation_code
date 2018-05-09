@@ -1,10 +1,4 @@
-#This is very similar to Figures_ANSTO_analysis, but in this one, I add all models for met evaluation
-#myColours <- c("#1B9E77", "#386CB0", "#666666","#FFB843", "#F42E3C", "#520066") #that purple is hard to distinguish from black 
-#myColours <- c("#1B9E77", "#386CB0", "#000000","#FFB843", "#F42E3C", "#7570B3")
-myColours <- c("#1B9E77", "#386CB0", "#000000","#FF7F00", "#F42E3C", "#7570B3") #trying a more vibrant orange (less yellow)
-myColours_2 <-  c("#1B9E77", "#386CB0", "#FF7F00", "#F42E3C", "#7570B3") #for when there is no obs... 
-mylineTypes <- c("dashed","dotted","solid","dotdash","longdash","twodash")
-mylineWidths <- c(2,2,3,2,2,2)
+#This is a cleaned up version of the code, hopefully moving towards what we want in the paper 
 
 library(openair)
 library(plyr)
@@ -12,83 +6,141 @@ library(lattice)
 library(latticeExtra)
 library(stringi)
 
-#load in data 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-load("BOM_data_updated.RData")
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-load("ANSTO_model_output.RData")
-load("CMAQ_model_output_new.RData")
-load("WRFCHEM_model_output_new.RData")
-load("CSIRO_model_output_new.RData")
-load("OEH_model_output.RData")
-load("site_info.RData")
+#Set directories 
+dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
+dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
+dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
+#dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
+dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-05-09/"
+dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
 
-#only include wrf-11 (issue with wrf-10)
-levels(as.factor(wrf$data_source))
-wrf <- subset(wrf, data_source == "WRF_11")
+#load in met observations from BOM  
+load(paste0(dir_obs,"/BOM_data_updated3.RData"))
+
+#load in original model data
+load(paste0(dir_mod,"/ANSTO_model_output.RData"))
+load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
+load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_new_new.RData"))
+load(paste0(dir_mod,"/OEH_model_output.RData"))
+load(paste0(dir_mod, "/YZ.RData"))
+#load in coordinates of all sites 
+load(paste0(dir_mod,"/site_info.RData"))
 
 #assign variables
 BOM <- bom_data_all_campaigns
-models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model)
-site_list <- levels(as.factor(BOM$site))
-species_list <- c("temp", "RH", "ws","wd","u10", "v10", "prcp", "pblh", "SWR")
-species_list_2 <- c("temp", "RH", "ws","wd", "u10", "v10")#, "prcp") #, "pblh")
-species_names <- c(expression("temperature (" * degree * "C)"), "RH (%)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind", "precipitation (mm)", "pblh (m)", "SWR")
+site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
+species_list <- c("temp", "W", "ws","wd","u10", "v10", "RH", "prcp", "pblh", "SWR", "pres") #variable we are interested in 
+param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
+species_names <- c(expression("temperature (" * degree * "C)"),  "water mixing ratio (g/kg)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind","RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
 campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
 date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
-stat_list <- c("r", "RMSE", "MB")
-#model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
-model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH")
 
-#select sites 
+#model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not sure why it is in this order???
+#model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not used as far as I can tell 
+species_list_2 <- c("temp", "W", "ws","wd", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
+stat_list <- c("r", "RMSE", "MB") #list of stats for plotting 
+
+#trim original model data 
+#only include wrf-11 (issue with wrf-10)
+levels(as.factor(wrf$data_source))
+wrf <- subset(wrf, data_source == "W-A11")
+
+#combine all original model data 
+models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#select model data for BOM sites only 
 model_met <- subset(models, site %in% site_list)
-#select dates #tried a loop but it did not work - not sure why:
-#model <- subset(subset(model_met, campaign %in% campaign[d]), date >= start_date[d] & date <= end_date[d])
-#start_date <- c("2012-12-31 14:00 UTC","2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
-#end_date <- c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
-#campaign <- c("MUMBA","SPS1", "SPS2" ) # repeated
+
+
+#cut to length - some model runs were longer than the actual campaigns 
 mumba_mod <- subset(model_met, campaign %in% "MUMBA")
 mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
 sps1_mod <- subset(model_met, campaign %in% "SPS1")
 sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
 sps2_mod <- subset(model_met, campaign %in% "SPS2")
 sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
-
 model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
+#select variables that are of interest only 
+#indices <- match(species_list, names(model_met)) #not for here - for later 
+model_met <- model_met[,param_list]
 
-#create site info 
-#site_info <- data.frame(site = model_met$site, site_lat = model_met$site_lat, site_lon = model_met$site_lon)
-#site_info <- unique(site_info)
-
+##prepare dfs for analysis 
 #merge obs and model output into wide format 
 met <- merge(BOM, model_met, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
+
+#insert all stats and overall Taylor diagrams here 
+library(reshape2)
+library(plyr)
+
+melted_BOM <- melt(BOM, id = c("date", "site", "campaign"), value.name = "obs")
+melted_model_met <- melt(model_met, id = c("date", "site", "campaign", "data_source"), value.name = "mod")
+melted <- merge(melted_BOM, melted_model_met, by = c("date", "site", "campaign", "variable"))
+
+setwd(dir_figures)
+png(filename = "Taylor_all.png", width = 8 * 300, height = 12 * 300, res = 300)
+TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = "obs", mod = "mod", normalise = T, 
+              group = "variable", type = c("campaign", "data_source"), cex = 0.95, 
+              annotate = "", rms.col = "grey40")
+dev.off()
+
+###
+
+##analysis 
+#I made a series of similar functions to output stats 
+source(paste0(dir_code,"/makeStats_functions.R"))
+
+for (k in 1:length(species_list_2)){   
+  stats_name <- paste0("stats_",species_list[k])
+  stats <- makeStats1(met, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_dom_avg.csv"), row.names =F)
+  stats <- makeStats2(met, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
+  stats <- makeStats3(met, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_per_campaign_per_site.csv"), row.names =F)
+  }   
+
+met_daily <- timeAverage(met, avg.time = "1 day", type = c("site", "campaign", "data_source"))
+
+for (k in 1:length(species_list_2)){   
+  stats_name <- paste0("stats_",species_list[k])
+  stats <- makeStats1(met_daily, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, "daily_", stats_name, "_dom_avg.csv"), row.names =F)
+  stats <- makeStats2(met_daily, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, "daily_",stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
+  stats <- makeStats3(met_daily, species_list_2[k])
+  write.csv(stats, file = paste0(dir_stat_output, "daily_" ,stats_name, "_per_campaign_per_site.csv"), row.names =F)
+}  
+
+
 #merge obs and model output into long format 
 BOM$data_source <- "OBS"
 met_ln <- rbind.fill(BOM, model_met)
 
-#settings for lattice plotting
-original.settings <- trellis.par.get()
-my.settings <- trellis.par.get()
-names(my.settings)
-my.settings$superpose.line$col = myColours_2  
-my.settings$superpose.line$lty = mylineTypes
-my.settings$superpose.line$lwd = mylineWidths
-my.settings$superpose.polygon$col = myColours_2
-my.settings$superpose.symbol$col = myColours_2
-my.settings$superpose.symbol$pch = c(16:21)
-my.settings$strip.background$col <- "white"
-#trellis.par.set(my.settings) #need to include this inside the graphing device if I want white strips and the right colours 
-#no good because it changes the default settings - but necessary for timeVariation... 
+#for plotting 
+source(paste0(dir_code,"/lattice_plot_settings.R"))
+#this defines myColours, myColours2 (no obs), mylineTypes, mylineWidths, my.settings 
 
-mystrip <- strip.custom(bg ="white")
+#####################above has been tidied up, not below 
 
+
+
+#plot diurnal cycles and time series for all species in species_list
+setwd(dir_figures)
+for (i in 1:length(species_list)) {
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
+  png(filename = paste0(dir_figures,species_list[i],"_diurnal.png"), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
+  print(d, subset = "hour")
+  dev.off()
+} 
+trellis.par.set(original.settings)
+ 
 #plot diurnal cycles and time series for all species in species_list (exclude Bellambi)
 for (i in 1:length(species_list)) {
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
   d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
-  png(filename = paste(species_list[i],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  png(filename = paste0(dir_figures,species_list[i],"_diurnal.png"), width = 6 * 300, height = 4 * 300, res = 300)
   trellis.par.set(my.settings)
   print(d, subset = "hour")
   dev.off()
@@ -107,15 +159,20 @@ trellis.par.set(original.settings)
 #trellis.par.set(original.settings)
 
 #this is to plot water content 
-setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
-d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = "W", group = "data_source", type = "campaign", ci = F, ylab = "water content", key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
-png(filename = "water_diurnal.png", width = 6 * 300, height = 4 * 300, res = 300)
-trellis.par.set(my.settings)
-print(d, subset = "hour")
-dev.off()
-#looks odd - not including it in preliminary evaluation - need to double check calculation of W from BOM data
+#setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+#d <- 
+#  timeVariation(subset(met_ln, site != "Bellambi"), pollutant = "W", group = "data_source", type = "campaign", ci = F, ylab = "water content", key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
+#  timeVariation(subset(met_ln, site == "Bellambi"), pollutant = "W", group = "data_source", type = "campaign", ci = F, ylab = "water content", key.columns = 3,  col = myColours, lty = mylineTypes, lwd = mylineWidths)
+  
+  #png(filename = "water_diurnal.png", width = 6 * 300, height = 4 * 300, res = 300)
+#trellis.par.set(my.settings)
+#print(d, subset = "hour")
+#dev.off()
+#looks odd - not including it in preliminary evaluation - need to double check calculation of W from BOM data - did that, results still look off
+  #need to add calculation to all models 
 
 #these are for time series of hourly values - hard to read, not for paper 
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/timeseries")
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
   png(filename = paste(species_list[i],campaign[j],"timeseries.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
@@ -145,6 +202,8 @@ for (i in 1:length(species_list)) {
 }
 trellis.par.set(original.settings)
 
+#timeseries by site 
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/timeseries")
 for (i in 1:length(species_list)) {
   for (j in 1:length(date_start)){
     png(filename = paste(species_list[i],campaign[j],"timeseries_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
@@ -157,10 +216,11 @@ for (i in 1:length(species_list)) {
 
 #plot median instead of mean in overall diurnal plots
 for (i in 1:length(species_list)) {
-  
-  d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, statistic = "median", conf.int = F,
+  d <- timeVariation(met_ln, pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, statistic = "median", conf.int = F,
                      col = myColours, lty = mylineTypes, lwd = mylineWidths)
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+ # d <- timeVariation(subset(met_ln, site != "Bellambi"), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, ylab = species_names[i], key.columns = 3, statistic = "median", conf.int = F,
+#                     col = myColours, lty = mylineTypes, lwd = mylineWidths)
+ # setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/")
   png(filename = paste(species_list[i],"median_diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   trellis.par.set(my.settings)
   print(d, subset = "hour")
@@ -173,7 +233,7 @@ for (k in 1:length(site_list)) {
   for (i in 1:length(species_list)) {
     d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, statistic = "median",
                        ylab = species_names[i], key.columns = 3, main = site_list[k], col = myColours, lty = mylineTypes, lwd = mylineWidths)
-    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/median_cycles/")
+    setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/median cycles/")
     png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
     trellis.par.set(my.settings)
     print(d, subset = "hour")
@@ -186,23 +246,35 @@ for (k in 1:length(site_list)) {
 trellis.par.set(original.settings)
 
 
-
-
 strip = function(...) strip.default(...)
 strip.left = strip.custom(style=1, horizontal = F)
 
-for (k in 1:length(species_list_2)){
+
+         
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
 #   png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
 #   TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", 
 #                 main = species_names[k], col = myColours_2)
 #  dev.off()
+ # t <- TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = c("data_source", "site"), type = "campaign", 
+                    # main = species_names[k], col = myColours_2, cex = 0.7, normalise = T, key.tile = "Model")
+  t <- TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = c("data_source"), type = "campaign", 
+                   main = species_names[k], col = myColours_2, cex = 0.7, normalise = F, key.title = "Model")
+
+  test <- t$data
+  test <- within(test, cRMS <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*R))
+  png(filename = paste(species_list_2[k],"Taylor_Diagram.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+  
+  trellis.par.set(my.settings)
+  print(t)
+  dev.off()
+
 #colours are not the same here as for the other plots...   
 #  png(filename = paste(species_list_2[k],"Taylor_by_model.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
 #  TaylorDiagram(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source", group = "campaign", main = species_names[k])
 #  dev.off()
     
-  stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source","site", "campaign"))
+  stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
   #merge stats with site info... (lost when applying modStats)
   stats <- merge(stats, site_info, by = "site")
   
@@ -213,13 +285,33 @@ for (k in 1:length(species_list_2)){
   png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 8 * 300, height = 8 * 300, res = 300)
   print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
   dev.off()
-}
+    }
+  
+  #add means.obs and sd.obs to stats 
+  #means <- ddply(met, .(site, data_source), numcolwise(mean), na.rm = TRUE)
+  stats$means.obs <- mean(met)
+  
   #save stats and rename dataframe
   stats_name <- paste0("stats_",species_list[k])
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
   write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
   assign(stats_name,stats)
 }
+
+#same Taylor diagrams, but coloured by site 
+for (k in 1:length(species_list_2)){
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+  png(filename = paste(species_list_2[k],"Taylor_Diagram_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+  TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = c("site", "data_source"), type = "campaign", 
+                main = species_names[k], col = myColours_2)
+  dev.off()
+  png(filename = paste(species_list_2[k],"Taylor_by_campaign.png", sep = '_'), width = 9 * 300, height = 4.5 * 300, res = 300)
+  TaylorDiagram(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), group = "data_source", type = "campaign", 
+                main = species_names[k], col = myColours_2)
+  dev.off()
+}
+
+
 
 
 #make the same Taylor plots, but for each site... 
@@ -237,21 +329,25 @@ for (k in 1:length(species_list_2)){
 }
 
 #make Taylor plots for each model, showing all sites for each campaign 
-setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots")
-for (m in 1:length(model_list)) {
-  for (k in 1:length(species_list_2)){
-    png(filename = paste(species_list_2[k],model_list[m],"Taylor_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-    TaylorDiagram(subset(met, data_source %in% model_list[m]), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"),  group = "site" ,type = "campaign", main = paste0(model_list[m], "-", species_list_2[k]))
-  dev.off()
-    }
-}
+#setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots")
+#for (m in 1:length(model_list)) {
+#  for (k in 1:length(species_list_2)){
+#    png(filename = paste(species_list_2[k],model_list[m],"Taylor_by_site.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
+#    TaylorDiagram(subset(met, data_source %in% model_list[m]), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"),  group = "site" ,type = "campaign", main = paste0(model_list[m], "-", species_list_2[k]))
+#  dev.off()
+#    }
+#}
 #falls over because OEH does not have RH - run again with m in 5: and k in 3: 
 
 
 #make more stats 
 #overall stats, hourly values 
 for (k in 1:length(species_list_2)){
-stats <- modStats(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+#stats <- modStats(subset(met, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+stats_paper <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = "data_source")
+stats_paper$mean.obs <- 
+
 #save stats and rename dataframe
 stats_name <- paste0("stats_dom_avg_",species_list[k])
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
@@ -264,8 +360,9 @@ met_daily_sum <- timeAverage(met, avg.time = "1 day", statistic = "sum", type = 
 met_daily$prcp.mod <- met_daily_sum$prcp.mod
 met_daily$prcp.obs <- met_daily_sum$prcp.obs
 for (k in 1:length(species_list_2)){
-  stats <- modStats(subset(met_daily, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
-  #save stats and rename dataframe
+  #stats <- modStats(subset(met_daily, site != "Bellambi"), obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+  stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign"))
+    #save stats and rename dataframe
   stats_name <- paste0("daily_stats_dom_avg_",species_list[k])
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
   write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
@@ -343,7 +440,8 @@ for (i in 1:length(species_list)) {
   }
 }
 
-
+######
+#This is done somewhere else, no? 
 #It looks like daily is better for prcp than hourly - but what about campaign totals
 sums <- ddply(met_ln, .(site, campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp <- subset(sums, select = c("site", "campaign", "data_source", "prcp"))
@@ -404,6 +502,7 @@ stats_name <- "stats_dom_avg_total_prcp"
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
 write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
 assign(stats_name,stats)
+####################
 
 #as I prepared plots for ANSTO comparison, I thought of this: 
 setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
@@ -486,6 +585,9 @@ for (k in 1:length(species_list_2)) {
   dev.off()
 }
 #these are not bad - include them in plots to send modellers 
+
+
+
 
 
 

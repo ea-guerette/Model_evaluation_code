@@ -5,6 +5,7 @@
 #modified for tzone
 #05/2017 - adding Bellambi and Wollongong Airport + fixed campaign dates
 #02/2018 - modified again? - I think the start/end dates may be one minute off? leave it for now
+#05/2018 - fixed dates so they match modelled periods (with correct tz, etc.)
 
 # SET WORKING DIRECTORY #
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute")
@@ -32,7 +33,8 @@ stn_no <- c("stn20","stn21","stn22","stn23","stn24","stn25")
 period <- c("MUMBA", "SPS2", "SPS1")
 period_start <-c("2012-12-21 00:01", "2012-04-16 00:01", "2011-02-07 00:01")
 period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
-
+hr_start <- c("2012-12-31 14:00 UTC", "2012-04-15 14:00 UTC", "2011-02-06 14:00 UTC")
+hr_end <-  c("2013-02-15 13:00 UTC", "2012-05-13 13:00 UTC","2011-03-06 13:00 UTC")
 
 for (i in 1:length(stns)){
 
@@ -59,9 +61,17 @@ ifelse( mwd < 0, mwd +360, mwd)
 bom_data$u10 <- bom_data$ws * cos(pi*mwd/180)
 bom_data$v10 <- bom_data$ws * sin(pi*mwd/180)
 
-PWS <- 6.116 * 10^((7.591386*bom_data$temp)/(bom_data$temp + 240.7263))
-PW <- bom_data$RH /100 * PWS
-bom_data$W <- 622 * PW / (bom_data$pres - PW)
+
+#PWS <- 6.116 * 10^((7.591386*bom_data$temp)/(bom_data$temp + 240.7263))
+#PW <- bom_data$RH /100 * PWS
+#bom_data$W <- 622 * PW / (bom_data$pres - PW)
+#this looked odd, maybe try this (from Bolton, works for pblh calcs:
+
+es <- 6.112*exp((17.67*bom_data$temp)/(bom_data$temp+243.5))
+e <- es * (bom_data$RH/100.0)
+q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+# I want w: grams of vapor per kg of dry air
+bom_data$W <- q*1000
 
 bom_data_hrlyavg <-timeAverage(bom_data[,-(2:3)], avg.time = "hour", data.thresh = 0, statistic = "mean", interval = "min", fill =FALSE) #exclude precipitation
 prcp <- as.data.frame(timeAverage(bom_data[,(1:3)], avg.time = "hour", data.thresh = 0, statistic = "sum", interval = "min", fill =FALSE))
@@ -78,7 +88,8 @@ bom_data_hrlyavg$site <- stnnames[i] #I added this so the file would include a s
 # write for each modelling period
 for (p in 1:3){
 
-    bom_data_subset <-subset(bom_data_hrlyavg, date >= period_start[p] & date <=period_end[p] )
+    bom_data_subset <-subset(bom_data_hrlyavg, date >= hr_start[p] & date <= hr_end[p] )
+    #bom_data_subset <- selectByDate(bom_data_hrlyavg, start = hr_start[p], end = hr_end[p])
     write.csv(bom_data_subset,paste("~/R_Model_Intercomparison/Campaign data/BOM data/",stnnames[i],"_",period[p],"_",stn_no[i],".csv", sep=""), row.names=FALSE)
     
 }
@@ -116,9 +127,15 @@ ifelse( mwd < 0, mwd +360, mwd)
 bom_data$u10 <- bom_data$ws * cos(pi*mwd/180)
 bom_data$v10 <- bom_data$ws * sin(pi*mwd/180)
 
-PWS <- 6.116 * 10^((7.591386*bom_data$temp)/(bom_data$temp + 240.7263))
-PW <- bom_data$RH /100 * PWS
-bom_data$W <- 622 * PW / (bom_data$pres - PW)
+#PWS <- 6.116 * 10^((7.591386*bom_data$temp)/(bom_data$temp + 240.7263))
+#PW <- bom_data$RH /100 * PWS
+#bom_data$W <- 622 * PW / (bom_data$pres - PW)
+
+es <- 6.112*exp((17.67*bom_data$temp)/(bom_data$temp+243.5))
+e <- es * (bom_data$RH/100.0)
+q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+# I want w: grams of vapor per kg of dry air
+bom_data$W <- q*1000
 
 bom_data_hrlyavg <-timeAverage(bom_data[,-(2:3)], avg.time = "hour", data.thresh = 0, statistic = "mean", interval = "min", fill =FALSE) #exclude precipitation
 prcp <- as.data.frame(timeAverage(bom_data[,(1:3)], avg.time = "hour", data.thresh = 0, statistic = "sum", interval = "min", fill =FALSE))
@@ -130,11 +147,12 @@ bom_data_hrlyavg$site <- stnnames[i]
 # write for each modelling period
 for (p in 1:3){
   
-  bom_data_subset <-subset(bom_data_hrlyavg, date >= period_start[p] & date <=period_end[p] )
+  bom_data_subset <-subset(bom_data_hrlyavg, date >= hr_start[p] & date <=hr_end[p] )
   write.csv(bom_data_subset,paste("~/R_Model_Intercomparison/Campaign data/BOM data/",stnnames[i],"_",period[p],".csv", sep=""), row.names=FALSE)
   
 }
 }
+
 
 
 
@@ -156,6 +174,7 @@ bom_data_sps1$date <- as.POSIXct(bom_data_sps1$date, format = "%Y-%m-%d %H:%M:%S
 bom_data_sps1$campaign <- "SPS1"
 #test
 timePlot(bom_data_sps1, pollutant = "ws", type = "site")
+timePlot(bom_data_sps1, pollutant = "W", type = "site")
 timePlot(bom_data_sps1, pollutant = "prcp", type = "site", plot.type = "h")
 
 
@@ -170,6 +189,7 @@ bom_data_sps2$date <- as.POSIXct(bom_data_sps2$date, format = "%Y-%m-%d %H:%M:%S
 bom_data_sps2$campaign <- "SPS2"
 
 timePlot(bom_data_sps2, pollutant = "ws", type = "site")
+timePlot(bom_data_sps2, pollutant = "W", type = "site")
 timePlot(bom_data_sps2, pollutant = "prcp", type = "site", plot.type = "h")
 
 
@@ -181,7 +201,7 @@ bom_data_mumba <- do.call(rbind, bom_data) #third campaign
 bom_data_mumba$date <- as.POSIXct(bom_data_mumba$date, format = "%Y-%m-%d %H:%M:%S", tz = "Etc/GMT-10")
 #add campaign tag
 bom_data_mumba$campaign <- "MUMBA"
-bom_data_mumba <-subset(bom_data_mumba, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC" )
+#bom_data_mumba <-subset(bom_data_mumba, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC" )
 
 timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 
@@ -190,10 +210,16 @@ timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 bom_data_all_campaigns <- rbind(bom_data_sps1, bom_data_sps2, bom_data_mumba)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_updated.RData")
+save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_updated3.RData")
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-load("BOM_data_updated.RData")
+load("BOM_data_updated3.RData")
+
+
+
+
+
+
 
 #for Doreena - Bellambi MUMBA only - keep it in one minute data 
 bomdata <- read.csv(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute/HD01D_Data_068228_999999999439464.txt"), header=TRUE) 

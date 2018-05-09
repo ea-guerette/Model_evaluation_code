@@ -110,7 +110,7 @@ scatterPlot(selectByDate(prcp_ln, start = date_start[j], end = date_end[j]), x =
 #add models 
 #go to Figures_met_abalysis.R to read in data 
 #model_met_SPS1 <- subset(model_met, campaign %in% "SPS1")
-model_met_3hr <- timeAverage(model_met, avg.time = "3 hour", statistic = "sum", type = c("data_source", "site","campaign")) 
+#model_met_3hr <- timeAverage(model_met, avg.time = "3 hour", statistic = "sum", type = c("data_source", "site","campaign")) 
 model_met_daily <- timeAverage(model_met, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign")) 
 
 prcp_ln_daily <- timeAverage(prcp_ln, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign"))         
@@ -156,7 +156,7 @@ mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
                col=myColours_prcp,
                superpose.polygon=list(col= myColours_prcp),
-               ylab = "Total precipitaion (mm)", #ylim = c(0, 150),
+               ylab = "Total precipitaion (mm)", ylim = c(0, 800),
                #strip.left = strip.custom(style=1, horizontal = F),
                auto.key = list(column = 3, space = "top"), 
                par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
@@ -164,6 +164,35 @@ b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = tota
 plot(b1, strip = mystrip)
 dev.off() 
 trellis.par.set(original.settings)
+
+#make the same plot, but not showing individual sites (models should be one bar only for each campaign)
+sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
+total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
+
+myColours_prcp <- c("grey80","#000000","#1B9E77", "#386CB0", "#FF7F00", "#F42E3C", "#7570B3")
+mystrip <- strip.custom(bg ="white")
+library(lattice)
+library(latticeExtra)
+
+
+setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis")
+png(filename = "Total_prcp_w_MSWEP.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+trellis.par.set(my.settings) 
+mystrip <- strip.custom(bg ="white")
+b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
+               col=myColours_prcp,
+               superpose.polygon=list(col= myColours_prcp),
+               ylab = "Total precipitaion (mm)", ylim = c(0, max(total_prcp2$prcp, na.rm = T)+100),
+               #strip.left = strip.custom(style=1, horizontal = F),
+               auto.key = list(column = 3, space = "right"), 
+               par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
+#print(useOuterStrips(b1, strip = mystrip, strip.left = mystrip)) #useOuterStrips ignores specified strip parameters... 
+plot(b2, strip = mystrip)
+dev.off() 
+trellis.par.set(original.settings)
+
+
+
 
 ##statistical analysis 
 total_prcp_obs <- subset(total_prcp, data_source %in% "OBS")

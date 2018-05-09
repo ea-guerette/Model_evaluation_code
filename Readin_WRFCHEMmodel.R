@@ -78,13 +78,26 @@ for (i in 1:length(campaign)) {
   names(data)[-c(1,2,3)] <- list_var[10:length(list_var)]
   
   #add data_source 
-  data$data_source <- "WRF-Chem"
+  data$data_source <- "W-UM2"
   names(data)[c(3,4,5,6,8,10,11,9)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
   #make prcp in mm 
   #data$prcp <- data$prcp*10 #data is already in mm, not cm 
   data$prcp[data$prcp < 0] <- NA #to remove negative values close to spin up periods 
   data$temp <- data$temp - 273.15 
-  data$pres <- data$pres / 1000
+  data$pres <- data$pres / 100
+  
+  #calculate water mixing ratio
+  es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
+  e <- es * (data$RH/100.0)
+  q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+  # I want w: grams of vapor per kg of dry air
+  data$W <- q*1000
+  
+  data$NH4 <- data$nh4ai + data$nh4aj 
+  data$NO3 <- data$no3ai + data$no3aj 
+  data$SO4 <- data$so4ai + data$so4aj
+  data$EC <-  data$eci + data$ecj 
+  
   #add campaign tag
   data$campaign <- campaign[i]
   #cut data to length
@@ -107,3 +120,5 @@ wrf_chem <- rbind(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA,wrf_chem, file = "WRFCHEM_model_output_new.RData")
 
+#library(openair)
+#timePlot(wrf_chem_SPS2, pollutant = c("PM2.5", "SO4"), type = "site")

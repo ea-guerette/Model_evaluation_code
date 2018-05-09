@@ -1,0 +1,4 @@
+# ignore R auxilliary junk and any misplaced figures
+*.png
+.Rhistory
+.RData

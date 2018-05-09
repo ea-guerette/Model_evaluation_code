@@ -74,10 +74,22 @@ for (i in 1:length(campaign)) {
     names(data)[-c(1,2,3)] <- list_var[10:length(list_var)]
     
     #add data_source 
-    data$data_source <- "CMAQ"
+    data$data_source <- "W-UM1"
     names(data)[c(3,4,5,6,7,10,11,12)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
     #make prcp in mm 
     data$prcp <- data$prcp*10
+    
+    #calculate water mixing ratio
+    es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
+    e <- es * (data$RH/100.0)
+    q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+    # I want w: grams of vapor per kg of dry air
+    data$W <- q*1000
+    
+    data$NH4 <- data$ANH4I + data$ANH4J 
+    data$NO3 <- data$ANO3I + data$ANO3J
+    data$SO4 <- data$ASO4I + data$ASO4J 
+    data$EC <-  data$AECI + data$AECJ
     
     #add campaign tag
     data$campaign <- campaign[i]
@@ -102,4 +114,5 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Mod
 save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output_new.RData")
 save(site_info, file = "site_info.Rdata")
 
-load("CMAQ_model_output_new.RData")
+#load("CMAQ_model_output_new.RData")
+

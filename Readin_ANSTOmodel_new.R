@@ -9,13 +9,13 @@ library(reshape2)
 #start_date <- c("2012-12-31 14:00 UTC","2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC") 
 #end_date <- c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC","2012-05-13 13:00 UTC") 
 campaign <- c("MUMBA","SPS1", "SPS2" )
-config <- c("10", "11")
+#config <- c("10", "11")
 
 #go to folder containing model output 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/waspss-ansto/timeseries_extract_2")
 
 for (i in 1:length(campaign)) {
-  for (ii in 1:length(config)){
+ # for (ii in 1:length(config)){
 fname <- paste0("ANSTO-radon-wrfchem_d04_",campaign[i],"_config-",config[ii],".nc")
 ncin <- nc_open(fname)
 

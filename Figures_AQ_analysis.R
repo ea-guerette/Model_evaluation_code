@@ -22,22 +22,28 @@ load("OEH_obs.RData")
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 #load("ANSTO_model_output.RData")
-load("CMAQ_model_output.RData")
+load("CMAQ_model_output_new.RData")
 load("WRFCHEM_model_output_new.RData")
 #load("WRFCHEM_model_output.RData")
-load("CSIRO_model_output.RData")
+load("CSIRO_model_output_new_new.RData")
 load("OEH_model_output.RData")
 load("site_info.RData")
 
 OBS <- oeh_obs
 #OBS <- oeh_obs_updated #this updated file sucks - look at Newcastle... (can't believe I shared that!)
 models_SPS1 <- rbind.fill(cmaq_SPS1, wrf_chem_SPS1, csiro_SPS1, oeh_model_SPS1)
-models_SPS2 <- rbind.fill(cmaq_SPS2, wrf_chem_SPS2, oeh_model_SPS2)
+models_SPS2 <- rbind.fill(cmaq_SPS2, wrf_chem_SPS2, csiro_SPS2, oeh_model_SPS2)
 models_MUMBA <- rbind.fill(cmaq_MUMBA, wrf_chem_MUMBA, csiro_MUMBA, oeh_model_mumba)
-models <- rbind.fill(cmaq, wrf_chem, csiro, oeh_model)
+
+mumba_mod <- subset(models_MUMBA, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+sps1_mod <- subset(models_SPS1, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+sps2_mod <- subset(models_SPS2, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+
+models <- rbind.fill(sps1_mod,sps2_mod,mumba_mod)
+
 site_list <- levels(as.factor(OBS$site))
-site_list <- site_list[-17] 
-species_list_aq <- c("O3", "NOx", "PM2.5","PM10","CO", "SO2")
+site_list <- site_list[-c(9,17:18)] 
+species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2")
 campaign <- c("MUMBA","SPS1", "SPS2")
 date_start <- c("21/12/2012","07/02/2011", "16/04/2012") 
 date_end <- c("15/02/2013","06/03/2011","13/05/2012")  
@@ -45,7 +51,7 @@ stat_list <- c("r", "RMSE", "MB")
 model_list <- c("CMAQ", "CSIRO", "OEH", "WRF-Chem") 
 #other_species_list <- c("C5H8, HCHO")
 #select sites 
-model_aq <- subset(models, site %in% site_list) # does not really work 
+model_aq <- subset(models, site %in% site_list) # does not really work - the dropped sites are still in factor levels... (but the data is gone)
 
 #merge obs and model output into wide format 
 aq <- merge(OBS, model_aq, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
@@ -84,7 +90,7 @@ my.settings$strip.background$col <- "white"
 
 mystrip <- strip.custom(bg ="white")
 
-#plot diurnal cycles and time series for all species in species_list 
+#plot diurnal and weekly cycles for all species in species_list - this is not right, not all sites have obs 
 for (i in 1:length(species_list_aq)) {
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis")
   d <- timeVariation(aq_ln, pollutant = species_list_aq[i], group = "data_source", type = "campaign", ci = F, ylab = species_list_aq[i], key.columns = 3,  col = myColours_aq, lty = mylineTypes, lwd = mylineWidths)
@@ -92,7 +98,54 @@ for (i in 1:length(species_list_aq)) {
   trellis.par.set(my.settings)
   print(d, subset = "hour")
   dev.off()
+  png(filename = paste(species_list_aq[i],"weekly.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
+  print(d, subset = "day")
+  dev.off()
 } 
+
+#look at each species at each site (daily and weekly): 
+for (k in 1:length(site_list)) {
+  for (i in 1:length(species_list_aq)){
+  d <- timeVariation(subset(aq_ln, site %in% site_list[k]), pollutant = species_list_aq[i], group = "data_source", type = "campaign", ci = F,
+                     ylab = species_list_aq[i], key.columns = 3, main = site_list[k], col = myColours_aq, lty = mylineTypes, lwd = mylineWidths)
+  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis/site plots/")
+  png(filename = paste(species_list_aq[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
+  print(d, subset = "hour")
+  trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+  panel.text(0.15, 0.825, site_list[k], cex = 1, font = 1)
+  trellis.unfocus()
+  dev.off()
+  png(filename = paste(species_list_aq[i],site_list[k],"weekly.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
+  trellis.par.set(my.settings)
+  print(d, subset = "day")
+  trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+  panel.text(0.15, 0.825, site_list[k], cex = 1, font = 1)
+  trellis.unfocus()
+  dev.off()
+}
+}
+
+test<- linearRelation(subset(aq_ln, data_source = "CMAQ"), x= "NOx", y = "NO2", period= "hour", condition = T, main = "CMAQ")
+a <- test$data
+test2 <- linearRelation(subset(aq_ln, data_source = "OBS"), x= "NOx", y = "NO2", period= "hour", condition = T, main = "OBS")
+b<- test2$data
+#gives exactly the same result - something is wrong 
+
+scatterPlot(aq_ln, x = "NOx", y = "NO2", type = c("campaign", "data_source"))
+#seems to work - hard to tell interpret
+scatterPlot(subset(aq_ln, site %in% "Bargo"), x = "NOx", y = "NO2", type = c("campaign", "data_source"), linear = T)
+#shows how wrong the models are at Bargo - but why? 
+scatterPlot(subset(aq_ln, site %in% "Lindfield"), x = "NOx", y = "NO2", type = c("campaign", "data_source"), linear = T)
+scatterPlot(subset(aq_ln, site %in% "Oakdale"), x = "NOx", y = "NO2", type = c("campaign", "data_source"), linear = T)
+
+scatterPlot(aq_ln, x = "temp", y = "O3", type = c("campaign", "data_source"))
+
+windRose(subset(aq_ln, site %in% "Bargo"), type = c("campaign", "data_source"))
+
+
+
 trellis.par.set(original.settings)
 #there is an issue - I need to plot only the model results for the sites at which we have observations! 
 #O3 and NOx are measured everywhere - should be OK, but all the others are unfair comparisons

@@ -64,7 +64,12 @@ if (i != 1) {
 names(data)[c(55,56,57,58,59,60,61,8,9,10,11,12,13,15,16,17)] <- c("ws", "wd", "temp", "RH", "pblh", "pres","prcp", 
                                                                   "HCHO","Methanol", "C5H8", "IsopRxnProd","Terpenes","CH3CHO",
                                                                   "Toluene", "Xylenes", "Benzene" )
-  
+#calculate water mixing ratio
+es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
+e <- es * (data$RH/100.0)
+q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+# I want w: grams of vapor per kg of dry air
+data$W <- q*1000  
   
 }
 
@@ -84,14 +89,18 @@ data$PM2.5 <- (data$NH4 + data$NIT + data$ASO4 + data$SS25
                      + data$BOA6 + data$DU02)
 data$PM10 <- data$PM2.5 + data$AS10 + data$SS10 + data$OT10 + data$EC10 + data$OC10 + data$DU05 #+ data$DU10
 
+names(data)[c(18, 24:25)] <- c("EC","NO3", "SO4")
+
 #calculate u10 and v10
 mwd <- 270- data$wd
 ifelse( mwd < 0, mwd +360, mwd) 
 data$v10 <- data$ws * sin(pi*mwd/180)
 data$u10 <- data$ws * cos(pi*mwd/180)
 
+
+
 #also add a column specifying the data_source 
-data$data_source <- "CSIRO"
+data$data_source <- "C-CTM"
 data$campaign <- campaign[i]
 #data <- subset(data, date >= start_date[i] & date <= end_date[i])
 
@@ -110,5 +119,8 @@ timePlot(data, pollutant = "temp", type = "site")
 csiro <- rbind.fill(csiro_SPS1, csiro_SPS2, csiro_MUMBA)
 #csiro <- rbind.fill(csiro, csiro_SPS2)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(csiro, csiro_MUMBA, csiro_SPS1, csiro_SPS2, file = "CSIRO_model_output_new.RData")
-load("CSIRO_model_output_new.RData")
+save(csiro, csiro_MUMBA, csiro_SPS1, csiro_SPS2, file = "CSIRO_model_output_new_new.RData")
+#load("CSIRO_model_output_new_new.RData")
+
+#timePlot(csiro_MUMBA, pollutant = c("EC","SO4","PM2.5"), type = "site")
+

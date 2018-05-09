@@ -73,7 +73,7 @@ data$u10 <- data$ws * cos(pi*mwd/180)
 data$NOx <- data$NO + data$NO2
 
 #add data_source and campaign tag: 
-data$data_source <- "OEH"
+data$data_source <- "O-CTM"
 data$campaign <- campaign[i]
 
 #cut to length 
@@ -112,7 +112,7 @@ names(data) <- toupper(names(data))
 names(data)[c(12,18,24,25,26,36,37,38,47,48,49,50,51,42,43,44,45,46)] <- c("HCHO", "Methanol", "C5H8", "IsopRxnProd", "Terpenes", "Toluene", "Xylenes", "Benzene", "ws", "wd", "temp", "H2O", "pblh", "Na", "Mg","Ca", "K", "Cl")
 
 data <- cbind(date,data,site,campaign)
-data$data_source <- "OEH"
+data$data_source <- "O-CTM"
 #create NOx column
 data$NOx <- data$NO + data$NO2
 #calculate u10 and v10
@@ -170,7 +170,7 @@ for (i in 1:length(folders)) {
    #combine
   data <- cbind(date, data, site, campaign)
   data$NOx <- data$NO + data$NO2
-  data$data_source <- "OEH"  
+  data$data_source <- "O-CTM"  
   dataframe_name <- paste0("oeh_model_",folders[i]) 
   assign(dataframe_name,data)
 }
