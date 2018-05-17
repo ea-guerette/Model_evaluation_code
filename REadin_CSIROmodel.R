@@ -28,7 +28,7 @@ site_name <- list.files(pattern = ".csv", full.names = FALSE)
 site_name <- stri_replace_all_fixed(site_name, ".csv", "" )
 #Replace MUMBA_Uni by UOW 
 #if (i == 1) {
- site_name[c(1,15)] <- c("Albion_Park_Sth", "UOW")
+ #site_name[c(1,15)] <- c("Albion_Park_Sth", "UOW")
 #}
 #if (i == 2) {
 #  site_name[c(1,8)] <- c("Albion_Park_Sth", "UOW")
@@ -56,7 +56,8 @@ names(data) <- stri_replace_all_fixed(names(data), "cell_", "" )
 data <- data[-c(2,3,4,5,6)]
 #fix the met data names - give them the same names as for the other models #using pbenz and ptol in this 
 if (i ==1){
-names(data)[c(55,56,57,58,59,60,8,9,10,11,12,13,15,16,17)] <- c("ws", "wd", "temp", "RH", "pblh", "prcp", 
+#need to change this to something else - Richmond file is very different... 
+  names(data)[c(55,56,57,58,59,60,8,9,10,11,12,13,15,16,17)] <- c("ws", "wd", "temp", "RH", "pblh", "prcp", 
                                                                "HCHO","Methanol", "C5H8", "IsopRxnProd","Terpenes","CH3CHO",
                                                                "Toluene", "Xylenes", "Benzene" )
 }
@@ -97,7 +98,8 @@ ifelse( mwd < 0, mwd +360, mwd)
 data$v10 <- data$ws * sin(pi*mwd/180)
 data$u10 <- data$ws * cos(pi*mwd/180)
 
-
+data$site <- gsub("Albion_Park_South", "Albion_Park_Sth", data$site)
+data$site <- gsub("MUMBA_Uni", "UOW", data$site)
 
 #also add a column specifying the data_source 
 data$data_source <- "C-CTM"
@@ -119,7 +121,7 @@ timePlot(data, pollutant = "temp", type = "site")
 csiro <- rbind.fill(csiro_SPS1, csiro_SPS2, csiro_MUMBA)
 #csiro <- rbind.fill(csiro, csiro_SPS2)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(csiro, csiro_MUMBA, csiro_SPS1, csiro_SPS2, file = "CSIRO_model_output_new_new.RData")
+save(csiro, csiro_MUMBA, csiro_SPS1, csiro_SPS2, file = "CSIRO_model_output_new_new_fixed.RData")
 #load("CSIRO_model_output_new_new.RData")
 
 #timePlot(csiro_MUMBA, pollutant = c("EC","SO4","PM2.5"), type = "site")

@@ -11,17 +11,17 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
-dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-05-09/"
+#dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-05-14/"
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
 
 #load in met observations from BOM  
 load(paste0(dir_obs,"/BOM_data_updated3.RData"))
 
 #load in original model data
-load(paste0(dir_mod,"/ANSTO_model_output.RData"))
+load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
 load(paste0(dir_mod,"/OEH_model_output.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
@@ -40,12 +40,12 @@ date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 #model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not sure why it is in this order???
 #model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not used as far as I can tell 
 species_list_2 <- c("temp", "W", "ws","wd", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
-stat_list <- c("r", "RMSE", "MB") #list of stats for plotting 
-
+stat_list <- c("MB", "r","RMSE", "MGE", "IOA") #list of stats for plotting 
+stat_list2 <- c("MB", "RMSE", "MGE")
 #trim original model data 
 #only include wrf-11 (issue with wrf-10)
-levels(as.factor(wrf$data_source))
-wrf <- subset(wrf, data_source == "W-A11")
+#levels(as.factor(wrf$data_source))
+#wrf <- subset(wrf, data_source == "W-A11")
 
 #combine all original model data 
 models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
@@ -78,9 +78,11 @@ melted_BOM <- melt(BOM, id = c("date", "site", "campaign"), value.name = "obs")
 melted_model_met <- melt(model_met, id = c("date", "site", "campaign", "data_source"), value.name = "mod")
 melted <- merge(melted_BOM, melted_model_met, by = c("date", "site", "campaign", "variable"))
 
+source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+
 setwd(dir_figures)
 png(filename = "Taylor_all.png", width = 8 * 300, height = 12 * 300, res = 300)
-TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = "obs", mod = "mod", normalise = T, 
+mod_TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = "obs", mod = "mod", normalise = T, 
               group = "variable", type = c("campaign", "data_source"), cex = 0.95, 
               annotate = "", rms.col = "grey40")
 dev.off()
@@ -90,6 +92,9 @@ dev.off()
 ##analysis 
 #I made a series of similar functions to output stats 
 source(paste0(dir_code,"/makeStats_functions.R"))
+#for plotting 
+source(paste0(dir_code,"/lattice_plot_settings.R"))
+#this defines myColours, myColours2 (no obs), mylineTypes, mylineWidths, my.settings 
 
 for (k in 1:length(species_list_2)){   
   stats_name <- paste0("stats_",species_list[k])
@@ -114,13 +119,129 @@ for (k in 1:length(species_list_2)){
 }  
 
 
+#make summary plots for the stats  
+require(latticeExtra)
+setwd(paste0(dir_figures, "/visual_stats/"))
+#species_col <- match(stat_list, names(stats2))
+
+for (k in 1:length(species_list_2)){  
+stats_hr <- makeStats2(met, species_list_2[k])
+stats_hr$avg <- "hourly"
+melted_stats_hr <- melt(stats_hr, id = c("data_source","campaign", "avg"), value.name = "value")
+melted_stats_hr <- subset(melted_stats_hr, variable %in% stat_list)
+
+stats_d <- makeStats2(met_daily, species_list_2[k])
+stats_d$avg <- "daily"
+melted_stats_d <- melt(stats_d, id = c("data_source","campaign", "avg"), value.name = "value")
+melted_stats_d <- subset(melted_stats_d, variable %in% stat_list)
+
+stats <- rbind(melted_stats_hr,melted_stats_d)
+#melted_stats <- merge(melted_stats_hr, melted_stats_d, by = c("data_source", "campaign", "variable", "avg"))
+e<- xyplot(value ~data_source|variable + campaign, data = stats, groups = avg,
+           strip.left = T,
+           scales = list(y = list(relation = "free"), x = list(alternating = 1, rot = c(40,0))),
+           par.settings = my.settings,
+           main = species_list_2[k],
+           auto.key = T
+           ) 
+png(filename = paste0(species_list_2[k], "_stats_by_campaign.png"), width = 10*300, height = 8*300, res = 300)
+print(useOuterStrips(e),strip = mystrip, strip.left = mystrip) 
+dev.off()
+
+}
+
+for (k in 1:length(species_list_2)){  
+  for (i in 2: length(stat_list)) {
+stats_hr <- makeStats3(met, species_list_2[k])
+stats_hr$avg <- "hourly"
+stats_d <- makeStats3(met_daily, species_list_2[k])
+stats_d$avg <- "daily"
+stats2 <- rbind(stats_hr,stats_d)
+species_col <- match(stat_list[i], names(stats2))
+d<- xyplot(stats2[,species_col] ~site|data_source + campaign, data = stats2, groups =  avg,  auto.key= T,
+           par.settings = my.settings, ylab = stat_list[i],
+           scales = list(x = list(alternating = 1, rot = c(40,0))),
+           strip.left = T,
+           type=c("p","g"),
+           main = species_list_2[k])
+png(filename = paste0(species_list_2[k],"_", stat_list[i], "_by_site.png"), width = 15*300, height = 10*300, res = 300)
+print(useOuterStrips(d), strip = mystrip, strip.left = mystrip)
+dev.off()
+ }
+}
+
+
+
+#to check bias, etc. by time of day 
+
+met$HOD <- as.factor(format(met$date, "%H"))
+
+setwd(paste0(dir_figures,"/stats_by_HOD"))
+
+for (k in 1:length(species_list_2)) {
+
+stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("campaign", "data_source", "HOD"))
+
+
+ for (i in 1: length(stat_list)){
+ species_col <- match(stat_list[i], names(stats))
+ c <- xyplot(stats[,species_col] ~HOD|campaign, data = stats, groups = data_source, type = "l", 
+             scales = list(x = list(alternating = 1, at = c(0,3,6,9,12,15,18,21))), 
+             ylab = stat_list[i], xlab = "HOD", main = species_list_2[k],
+             par.settings = my.settings,
+             auto.key = list(column = 1, space = "right", points = F, lines = T),
+             layout = c(3,1))
+ png(filename = paste0(species_list_2[k], "_", stat_list[i], "_by_HOD.png"), width = 8 *300, 4*300, res = 300)
+ print(c)
+       
+dev.off()
+  }
+}
+
+
+
 #merge obs and model output into long format 
 BOM$data_source <- "OBS"
 met_ln <- rbind.fill(BOM, model_met)
 
-#for plotting 
-source(paste0(dir_code,"/lattice_plot_settings.R"))
-#this defines myColours, myColours2 (no obs), mylineTypes, mylineWidths, my.settings 
+#make quantile plots
+setwd(paste0(dir_figures,"/quantile_plots"))
+model_list <- levels(as.factor(met$data_source))
+
+for (i in 1:length(species_list_2)){ 
+species_col <- match(species_list_2[i], names(met_ln))
+
+for (k in 1:length(model_list)) {
+  d <- qq(data_source ~met_ln[,species_col]|campaign, data = met_ln, subset = (data_source == "OBS"| data_source == model_list[k]), 
+          layout = c(3,1), scales = list(x = list(alternating = 1)), strip = mystrip, main = species_list_2[i], col = myColours[k])  
+  
+png(filename = paste0(model_list[k], "_",species_list_2[i], "_quantile_plot.png"), width = 6 *300, height = 4*300, res = 300)
+  print(d)
+ dev.off()
+}
+} 
+
+
+#make bubble plots 
+setwd(paste0(dir_figures,"/bubble_plots"))
+strip = function(...) strip.default(...)
+strip.left = strip.custom(style=1, horizontal = F)
+
+for (k in 1:length(species_list_2)) {
+stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("data_source", "campaign", "site"))
+#merge stats with site info... (lost when applying modStats)
+stats <- merge(stats, site_info, by = "site")
+
+for (m in 1:length(stat_list)) {
+  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+                       maptype = "roadmap", col = "jet", cex = 1, main = paste(species_list[k] , "-", stat_list[m] ),
+                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+  png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 6 * 300, height = 8 * 300, res = 300)
+  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+  dev.off()
+}
+}
+
 
 #####################above has been tidied up, not below 
 
@@ -296,7 +417,7 @@ strip.left = strip.custom(style=1, horizontal = F)
   setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis")
   write.csv(stats, file = paste0(stats_name, ".csv"), row.names =F)
   assign(stats_name,stats)
-}
+
 
 #same Taylor diagrams, but coloured by site 
 for (k in 1:length(species_list_2)){
@@ -653,3 +774,6 @@ b$breaks
 stats_test <- modStats(met, obs = "ws.obs", mod = "ws.mod", type = c("data_source", "campaign", "bin_ws"))
 
 xyplot()
+
+
+

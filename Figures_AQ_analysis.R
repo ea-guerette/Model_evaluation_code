@@ -25,7 +25,7 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Mod
 load("CMAQ_model_output_new.RData")
 load("WRFCHEM_model_output_new.RData")
 #load("WRFCHEM_model_output.RData")
-load("CSIRO_model_output_new_new.RData")
+load("CSIRO_model_output_new_new_fixed.RData")
 load("OEH_model_output.RData")
 load("site_info.RData")
 

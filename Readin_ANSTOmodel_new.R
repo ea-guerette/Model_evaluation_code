@@ -12,11 +12,11 @@ campaign <- c("MUMBA","SPS1", "SPS2" )
 #config <- c("10", "11")
 
 #go to folder containing model output 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/waspss-ansto/timeseries_extract_2")
+setwd("C:/Users/eag873/ownCloud/ANSTO_model_output/timeseries_extract_2/") #the files on ownCloud are the new ones - May 2018 (keeping the oold ones in R_model_intercomparison/model_output for now)
 
 for (i in 1:length(campaign)) {
  # for (ii in 1:length(config)){
-fname <- paste0("ANSTO-radon-wrfchem_d04_",campaign[i],"_config-",config[ii],".nc")
+fname <- paste0("ANSTO-radon-wrfchem_d04_",campaign[i],"_config-11.nc")
 ncin <- nc_open(fname)
 
 #create a date vector 
@@ -74,7 +74,7 @@ for (j in 10:length(list_var)) { #start at nine because the first 8 ones are not
 names(data)[-c(1,2,3)] <- list_var[10:length(list_var)]
 
 #add data_source 
-data$data_source <- paste0("W-A",config[ii])
+data$data_source <- "W-A11"
 names(data)[c(3,4,5,6,7,10,11,12)] <- c("pblh","wd","ws","u10", "v10", "temp", "pres", "prcp")
 #make prcp in mm 
 data$prcp <- data$prcp*10
@@ -101,18 +101,18 @@ data$campaign <- campaign[i]
 data <- merge(data, site_info, by = "site")
 
 #save the dataframe as something else 
-dataframe_name <- paste0("wrf_",config[ii],"_",campaign[i]) 
+dataframe_name <- paste0("wrf_",campaign[i]) 
 assign(dataframe_name,data)
 timePlot(data, pollutant = "temp", type = "site")
   }
-}
 
-#create one large dataframe containing all six files 
-wrf <- rbind(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2)
+
+#create one large dataframe containing all 3 files 
+wrf <- rbind(wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2)
 
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(wrf_10_MUMBA,wrf_10_SPS1,wrf_10_SPS2,wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2,wrf, file = "ANSTO_model_output.RData")
+save(wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2,wrf, file = "ANSTO_model_output_new.RData")
 
 #load("ANSTO_model_output.RData")

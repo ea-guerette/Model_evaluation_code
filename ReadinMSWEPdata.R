@@ -76,14 +76,15 @@ timePlot(data, pollutant = "prcp", type = "site")
 }
 
 mswep <- rbind(mswep_SPS1,mswep_SPS2,mswep_MUMBA)
-save(mswep, file = "MSWEP.RData")
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
+save(mswep, file = "MSWEPv1_2.RData")
 
 
 #compare to point observations - BOM sites  
 library(plyr)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-load("BOM_data_updated.RData")
+load("BOM_data_updated3.RData")
 BOM <- bom_data_all_campaigns
 site_list <- levels(as.factor(BOM$site))
 
@@ -108,7 +109,7 @@ scatterPlot(selectByDate(prcp_ln, start = date_start[j], end = date_end[j]), x =
 
 
 #add models 
-#go to Figures_met_abalysis.R to read in data 
+#go to Figures_met_analysis.R to read in data 
 #model_met_SPS1 <- subset(model_met, campaign %in% "SPS1")
 #model_met_3hr <- timeAverage(model_met, avg.time = "3 hour", statistic = "sum", type = c("data_source", "site","campaign")) 
 model_met_daily <- timeAverage(model_met, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign")) 
@@ -156,7 +157,7 @@ mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
                col=myColours_prcp,
                superpose.polygon=list(col= myColours_prcp),
-               ylab = "Total precipitaion (mm)", ylim = c(0, 800),
+               ylab = "Total precipitation (mm)", ylim = c(0, 800),
                #strip.left = strip.custom(style=1, horizontal = F),
                auto.key = list(column = 3, space = "top"), 
                par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
@@ -182,7 +183,7 @@ mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
                col=myColours_prcp,
                superpose.polygon=list(col= myColours_prcp),
-               ylab = "Total precipitaion (mm)", ylim = c(0, max(total_prcp2$prcp, na.rm = T)+100),
+               ylab = "Total precipitation (mm)", ylim = c(0, max(total_prcp2$prcp, na.rm = T)+100),
                #strip.left = strip.custom(style=1, horizontal = F),
                auto.key = list(column = 3, space = "right"), 
                par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
