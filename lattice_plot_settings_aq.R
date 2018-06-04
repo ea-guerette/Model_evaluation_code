@@ -13,7 +13,7 @@ myColours_aq <- c("#386CB0", "#FF7F00",  "#7FC97F", "#F0027F","#1B9E77","#F42E3C
   #c("#1B9E77", "#D95F02", "#000000", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
 #myColours <- c("#1B9E77", "#386CB0", "#000000","#FF7F00", "#F42E3C", "#7570B3") 
 #myColours_2 <-  c("#1B9E77", "#386CB0", "#FF7F00", "#F42E3C", "#7570B3") #for when there is no obs... 
-mylineTypes <- c("dotted","dashed","dotdash","longdash","twodash", "dashed", "solid")
+mylineTypes <- c("dotted","dashed","longdash","dotdash","twodash", "dashed", "solid")
 mylineWidths <- c(2,2,2,2,2,2,2,3)
 
 original.settings <- trellis.par.get()
@@ -26,6 +26,7 @@ my.settings$superpose.polygon$col = myColours_2_aq
 my.settings$superpose.symbol$col = myColours_2_aq
 my.settings$superpose.symbol$pch = c(16:21)
 my.settings$strip.background$col <- "white"
+
 #trellis.par.set(my.settings) #need to include this inside the graphing device if I want white strips and the right colours 
 #no good because it changes the default settings - but necessary for timeVariation... 
 

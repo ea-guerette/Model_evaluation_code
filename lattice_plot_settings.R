@@ -7,7 +7,7 @@ myColours_2_aq <-  c("#386CB0", "#FF7F00",  "#7FC97F", "#F0027F","#1B9E77","#F42
 myColours_aq <- c("#386CB0", "#FF7F00",  "#7FC97F", "#F0027F","#1B9E77","#F42E3C", "#000000") 
 
 myColours2 <- c("#386CB0", "#FF7F00", "#7570B3", "#7FC97F", "#F0027F","#1B9E77","#F42E3C")
-
+myColours_bw <- c("#000000","#386CB0", "#FF7F00", "#7570B3", "#7FC97F", "#F0027F","#1B9E77","#F42E3C")
 myColours <- c("#386CB0", "#FF7F00", "#7570B3", "#7FC97F", "#F0027F","#1B9E77","#F42E3C", "#000000")
   #c("#7FC97F", "#BEAED4", "#000000", "#FDC086", "#FFFF99", "#386CB0", "#F0027F", "#BF5B17", "#666666")
   #c("#1B9E77", "#D95F02", "#000000", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
@@ -27,6 +27,12 @@ my.settings$superpose.polygon$col = myColours2
 my.settings$superpose.symbol$col = myColours2
 my.settings$superpose.symbol$pch = c(16:21)
 my.settings$strip.background$col <- "white"
+my.settings$box.dot$col = "black"
+my.settings$box.umbrella$col = "black"
+my.settings$plot.symbol$col = "black"
+my.settings$box.rectangle$col = myColours_bw
+my.settings$dot.symbol$col = "black" 
+
 #trellis.par.set(my.settings) #need to include this inside the graphing device if I want white strips and the right colours 
 #no good because it changes the default settings - but necessary for timeVariation... 
 

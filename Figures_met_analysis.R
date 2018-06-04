@@ -144,7 +144,7 @@ e<- xyplot(value ~data_source|variable + campaign, data = stats, groups = avg,
            main = species_list_2[k],
            auto.key = T
            ) 
-png(filename = paste0(species_list_2[k], "_stats_by_campaign.png"), width = 10*300, height = 8*300, res = 300)
+png(filename = paste0(species_list_2[k], "_stats_by_campaign.png"), width = 10*300, height = 8*300, res = 300) #this is the one we could try for Khalia's vertical profiles 
 print(useOuterStrips(e),strip = mystrip, strip.left = mystrip) 
 dev.off()
 

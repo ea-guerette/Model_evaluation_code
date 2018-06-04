@@ -8,7 +8,10 @@ RI <- function(thetav_z, thetav_s, z, z_s, u_z, u_s, v_z, v_s){
 }
 
 period <- c("MUMBA", "SPS2", "SPS1")
-dir <- "C:/Users/eag873/ownCloud/vertical_profiles/"
+period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+
+dir <- "C:/Users/eag873/ownCloud/vertical_profiles/CSIRO/"
 
 for (j in 1:length(period)){ 
 setwd(paste0(dir, period[j], "_vertical_profiles/"))
@@ -53,15 +56,30 @@ if (length(iPBL ==1)) {
 }
 
 output_csiro <- data.frame(date = as.POSIXct(output_date, format = "%Y%m%d_%H", tz = "UTC"), pblh = output_zPBL)
-
+output_csiro <-subset(output_csiro, date >= period_start[j] & date <=period_end[j] )
 output_csiro$campaign <- period[j]
+output_csiro$data_source <- "C-CTM"
 dataframe_name <- paste0("csiro_pblh_",period[j]) 
 assign(dataframe_name, output_csiro)
 } 
 
 csiro_pblh <- rbind(csiro_pblh_SPS1, csiro_pblh_SPS2, csiro_pblh_MUMBA) 
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison/Model output")
-save(csiro_pblh, csiro_pblh_MUMBA, csiro_pblh_SPS1, csiro_pblh_SPS2, file = "csiro_pblh.R")
+save(csiro_pblh, csiro_pblh_MUMBA, csiro_pblh_SPS1, csiro_pblh_SPS2, file = "csiro_pblh.RData")
+
+##############################
+
+timeVariation(csiro_pblh, pollutant = "pblh", type = "campaign", local.tz = "Etc/GMT-10" )
+
+
+
+
+
+
+
+
+
+
 
 
 library(openair)
