@@ -11,7 +11,7 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
-#dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-05-14/"
+dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-07-20/"
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
 
 #load in met observations from BOM  
@@ -22,7 +22,7 @@ load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
 load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output.RData"))
+load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
@@ -30,6 +30,8 @@ load(paste0(dir_mod,"/site_info.RData"))
 #assign variables
 BOM <- bom_data_all_campaigns
 site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
+site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
+
 species_list <- c("temp", "W", "ws","wd","u10", "v10", "RH", "prcp", "pblh", "SWR", "pres") #variable we are interested in 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 species_names <- c(expression("temperature (" * degree * "C)"),  "water mixing ratio (g/kg)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind","RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
@@ -118,6 +120,9 @@ for (k in 1:length(species_list_2)){
   write.csv(stats, file = paste0(dir_stat_output, "daily_" ,stats_name, "_per_campaign_per_site.csv"), row.names =F)
 }  
 
+#########
+
+#xyplot(ws.mod ~ ws.obs|campaign, groups = data_source, data = met)
 
 #make summary plots for the stats  
 require(latticeExtra)

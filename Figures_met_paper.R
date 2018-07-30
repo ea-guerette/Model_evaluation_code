@@ -19,7 +19,7 @@ load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
 load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output.RData"))
+load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
@@ -27,6 +27,7 @@ load(paste0(dir_mod,"/site_info.RData"))
 #assign variables
 BOM <- bom_data_all_campaigns
 site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
+site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
 
 species_list <- c("temp", "W", "ws","u10", "v10","wd","RH", "prcp", "pblh", "SWR", "pres") #met variables we are interested in 
 species_list_2 <- c("temp", "W", "ws", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
@@ -87,7 +88,8 @@ t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$
        auto.key = list(column = 4, space = "top", points = F, lines = T), 
        scales = list(x = list(alternating = 1)), layout = c(3,1)
        , aspect = 1
-              )
+       )
+              
 #taylor diagram 
 
 t2 <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours, key = F,
@@ -126,7 +128,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_v2.png"), width = 7 * 300, height = 9 * 300, res = 300)
+png(filename = paste0(fig_name[i], "_v4.png"), width = 7 * 300, height = 9 * 300, res = 300)
 
   print(t1, position = c(0,2/3-1/24.5,1,1), more = TRUE)
   print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE)
@@ -157,8 +159,12 @@ for (i in 1:2){
   t <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
                 ylab =names_species[i], type = "l", col = myColours, par.settings = my.settings,
                 auto.key = list(column = 4, space = "top", points = F, lines = T), 
-                scales = list(x = list(alternating = 1)), layout = c(3,1)
-                , aspect = 1
+                scales = list(x = list(alternating = 1)), ylim = c(-5, 3), layout = c(3,1)
+                , aspect = 1,
+               panel =function(...){  
+                 panel.xyplot(...);
+                 panel.abline(h = 0, col = "black", lty = 2)
+               }
   )
   assign(fig_index[[i]][1], t)
   
@@ -173,7 +179,7 @@ for (i in 1:2){
 }
 
 setwd(dir_figures)
-png(filename = paste0(fig_name, "_v2.png"), width = 14 * 300, height = 6 * 300, res = 300)
+png(filename = paste0(fig_name, "_v5.png"), width = 14 * 600, height = 6 * 600, res = 600)
 
 print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
 print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
@@ -213,7 +219,7 @@ my.settings_prcp <- my.settings
 my.settings_prcp$superpose.polygon$col <- myColours_prcp
 
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_v2.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_v4.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -233,7 +239,7 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_v2.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_v4.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,

@@ -85,113 +85,93 @@ assign(dataframe_name,data)
 timePlot(data, pollutant = "O3", type = "site")
 }
 
-#MUMBA output needs work - Khalia says the issue may be in the processing of the met results
-#which means that the modelling itself may be salvageable -BUT EXCLUDE FOR NOW (as requested by OEH)
-#easiest is probably to read it in, then only keep essentials + rbind.fill with SPS1, SPS2
 
 
-#MUMBA output is messy, so I have to code it separately 
-#the output for the actual MUMBA site is different from that of the other sites 
-start_date <- c("2013-01-01","2013-02-01")
-folders <- c("jan13_mumba_CTM.csv", "feb13_mumba_CTM.csv") 
+#MUMBA output - met only 
 
-setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/OEH_CCAM_CTM_MUMBA/")
-for (j in 1:length(folders)) {
-#read file in
-data <- read.csv(file = folders[j], header = T)
-#create date vector 
-date = seq(as.POSIXct(start_date[j]), by = "hours", length = nrow(data), tzone = "UTC")
-#create other vector
-site <- "MUMBA"
+setwd("C:/Users/eag873/ownCloud/OEH_surface_MUMBA/")
+
+data <- lapply(list.files(pattern = ".csv"),
+               function(.file) read.csv(.file, header = TRUE))
+data <- do.call(rbind, data)
+
+#create site vector using the names of the files in the folder 
+site_name <- list.files(pattern = ".csv")
+site <- sort(rep(site_name,  nrow(data)/length(site_name)))
 campaign <- "MUMBA"
 
-#select only model output 
-data <- data[ , grep(pattern = "cell_", names(data))]
-names(data) <- stri_replace_all_fixed(names(data), "cell_", "" )
-names(data) <- toupper(names(data))
-names(data)[c(12,18,24,25,26,36,37,38,47,48,49,50,51,42,43,44,45,46)] <- c("HCHO", "Methanol", "C5H8", "IsopRxnProd", "Terpenes", "Toluene", "Xylenes", "Benzene", "ws", "wd", "temp", "H2O", "pblh", "Na", "Mg","Ca", "K", "Cl")
 
-data <- cbind(date,data,site,campaign)
+data <- cbind(data,site,campaign)
 data$data_source <- "O-CTM"
-#create NOx column
-data$NOx <- data$NO + data$NO2
-#calculate u10 and v10
-mwd <- 270- data$wd
-ifelse( mwd < 0, mwd +360, mwd) 
-data$v10 <- data$ws * sin(pi*mwd/180)
-data$u10 <- data$ws * cos(pi*mwd/180)
 
-dataframe_name <- paste0("oeh_model_mumba_site_",j) 
-assign(dataframe_name,data)
-}
-oeh_model_MUMBA_site <- rbind(oeh_model_mumba_site_1, oeh_model_mumba_site_2)
-timePlot(oeh_model_MUMBA_site, pollutant = "temp") #looks wrong! 
+data$temp <- data$temp - 273.15 #conversion to degrees C 
+data$mixr <- data$mixr *1000 #conversion to g/kg
+data$rnd <- data$rnd /24 #conversion to mm/hr
+#make site names pretty
 
-#now, read in the other files... again, two folders 
-start_date <- c("2013-01-01","2013-02-01")
-date_length <- c(744,672)
-folders <- c("OEHsites_CTMjan13","OEHsites_CTMfeb13")
+data$site <- stri_replace_all_fixed(data$site, "-CCAM-level-0.csv", "")
+data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
+data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
+data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
+levels(as.factor(data$site))
 
-for (i in 1:length(folders)) {
-  setwd(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/", folders[i], "/"))
+#make Date into date
+date <- stri_replace_all_fixed(data$Date, "+00:00", "")
+date <- as.POSIXct(date, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
 
-  data <- lapply(list.files(pattern = ".csv"),
-                 function(.file) read.csv(.file, header = TRUE))
-  ##this combines all the files into one (stacked on top of each other)
-  data <- do.call(rbind, data)
-  #make date vector 
-  date = seq(as.POSIXct(start_date[i]), by = "hours", length = date_length[i], tzone = "UTC")
-  #make other vectors 
-  campaign <- "MUMBA"
-  site <- c(rep("Wollongong_Airport",date_length[i]), rep("Albion_Park_Sth", date_length[i]),
-            rep("Badgerys_Creek", date_length[i]), rep("Bankstown_Airport", date_length[i]),
-            rep("Bargo", date_length[i]), rep("Bringelly", date_length[i]),
-            rep("Camden_Airport", date_length[i]), rep("Chullora", date_length[i]),
-            rep("Earlwood", date_length[i]),rep("Kembla_Grange", date_length[i]),
-            rep("Lindfield", date_length[i]),rep("Liverpool", date_length[i]),
-            rep("Macarthur", date_length[i]),rep("Newcastle", date_length[i]),
-            rep("Oakdale", date_length[i]), rep("Prospect", date_length[i]),
-            rep("Randwick", date_length[i]),rep("Richmond", date_length[i]),
-            rep("Richmond_RAAF", date_length[i]),rep("Rozelle", date_length[i]),
-            rep("St_Marys", date_length[i]),rep("Sydney_Airport", date_length[i]),
-            rep("Vineyard", date_length[i]),rep("Westmead", date_length[i]),
-            rep("Williamtown_RAAF", date_length[i]),rep("Wollongong", date_length[i]))
-  #clean up data 
-  data <- data[ , grep(pattern = "ctm", names(data))]
-  names(data) <- stri_replace_all_fixed(names(data), ".ctm.", "" )
-  names(data)[c(8,12,13,14,15,16,17)] <- c("PM2.5", "ws","wd","temp","H2O","pblh", "prcp")
- 
-  #calculate u10 and v10
-  mwd <- 270- data$wd
-  ifelse( mwd < 0, mwd +360, mwd) 
-  data$v10 <- data$ws * sin(pi*mwd/180)
-  data$u10 <- data$ws * cos(pi*mwd/180)
-  
-   #combine
-  data <- cbind(date, data, site, campaign)
-  data$NOx <- data$NO + data$NO2
-  data$data_source <- "O-CTM"  
-  dataframe_name <- paste0("oeh_model_",folders[i]) 
-  assign(dataframe_name,data)
-}
-#combine jan and feb
-oeh_model_other_sites <- rbind(oeh_model_OEHsites_CTMjan13, oeh_model_OEHsites_CTMfeb13)
+data$Date <- date
+
+#rename variables 
+names(data)[1:10] <- c("date", "u10", "v10", "W", "temp", "pres", "pblh", "prcp", "ws", "wd")
+
+#select dates 
+data <- subset(data, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
 
 
-#make a MUMBA dataframe 
-oeh_model_mumba <- rbind.fill(oeh_model_MUMBA_site, oeh_model_other_sites)
+#make a MUMBA met dataframe 
+oeh_model_met_mumba <- data
 
-#cut it to length 
-#oeh_model_mumba <- subset(oeh_model_mumba, date >= "2013-01-01" & date <= "2013-02-15 13:00")
+#AQ only 
+setwd("C:/Users/eag873/ownCloud/OEH_surface_MUMBA/OEH_AQ_MUMBA")
 
-#replace oeh_model_mumba with dummy data 
-names(oeh_model_mumba)
-oeh_model_mumba <- subset(oeh_model_mumba, select = c("date", "site","campaign","data_source"))
-oeh_model_mumba$ws <- NA
+data <- lapply(list.files(pattern = ".csv"),
+               function(.file) read.csv(.file, header = TRUE, as.is = TRUE ))
+data <- do.call(rbind, data)
+
+#create site vector using the names of the files in the folder 
+site_name <- list.files(pattern = ".csv")
+site <- sort(rep(site_name,  nrow(data)/length(site_name)))
+#campaign <- "MUMBA"
+
+
+data <- cbind(data,site)#,campaign)
+data$site <- stri_replace_all_fixed(data$site, ".csv", "")
+data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
+data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
+data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
+levels(as.factor(data$site))
+
+date <- as.POSIXct(data$Date, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
+data$Date <- date
+data <- data[,c(1:26,33)]
+
+names(data)[c(1,7,9)] <- c("date", "HCHO", "C5H8", "Toluene", "Benzene", "Xylenes")
+
+data$NOx <- data$NO  + data$NO2
+
+data <- subset(data, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+
+oeh_model_AQ_mumba <- data
+
+#combine met and AQ
+
+oeh_model_mumba <- merge(oeh_model_met_mumba, oeh_model_AQ_mumba, by = c("date", "site"))
 
 #combine campaigns 
 oeh_model <- rbind.fill(oeh_model_SPS1, oeh_model_SPS2, oeh_model_mumba)
 
 #save 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(oeh_model, oeh_model_SPS1,oeh_model_SPS2, oeh_model_mumba, file = "OEH_model_output.RData")
+save(oeh_model, oeh_model_SPS1,oeh_model_SPS2, oeh_model_mumba, file = "OEH_model_output2.RData")
+
+

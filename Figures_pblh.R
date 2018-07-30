@@ -7,6 +7,8 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
+dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
+
 #load obs 
 load(paste0(dir_obs,"/BOM_pblh.RData"))
 
@@ -15,17 +17,23 @@ load(paste0(dir_mod,"cmaq_pblh.RData"))
 load(paste0(dir_mod,"ansto_pblh.RData"))
 load(paste0(dir_mod,"csiro_pblh.RData"))
 load(paste0(dir_mod,"yz_pblh.RData"))
-
+load(paste0(dir_mod,"oeh_pblh.RData"))
+load(paste0(dir_mod,"wrf_chem_pblh.RData"))
 #merge models 
 
-mod_pblh <- rbind(cmaq_pblh, csiro_pblh, ansto_pblh, yz_pblh)
+mod_pblh <- rbind(cmaq_pblh, csiro_pblh, ansto_pblh, yz_pblh, oeh_pblh, wrf_chem_pblh)
 timeVariation(mod_pblh, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
 scatterPlot(subset(mod_pblh, campaign %in% "MUMBA"), x = "date", y = "pblh", group = "data_source", plot.type = "l" )
+scatterPlot(selectByDate(mod_pblh, start = "17/01/2013", end = "19/01/2013"), x = "date", y = "pblh", group = "data_source", plot.type = "l", cols = myColours2 )
+
 ##############
-#not convinced I got the calcs right for CMAQ, YZ 
+#weird spikes at 4 and 22? in OEH model 
 
 
 source(paste0(dir_code, "lattice_plot_settings.R"))
+#make a generic key for all the plots 
+myKey <- list(column = 4, space = "top", text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours))
+
 #plot the diurnal variation 
 a <- timeVariation(mod_pblh, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
 temp_hour <- a$data$hour
@@ -106,11 +114,12 @@ pblh <- merge(pblh_obs, pblh_mod, by = c("date", "campaign", "TOD"), suffixes = 
 source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 setwd(dir_figures)
-#png(filename = "Taylor_pblh.png", width = 8 * 300, height = 12 * 300, res = 300)
+png(filename = "Taylor_pblh_all_models.png", width = 12 * 600, height = 8 * 600, res = 600)
 mod_TaylorDiagram(pblh,  obs = "pblh.obs", mod = "pblh.mod", normalise = T, 
                   group = "data_source", type = c("campaign", "TOD"), cex = 1.25, 
-                  annotate = "", rms.col = "grey40")
-#dev.off()
+                  annotate = "", rms.col = "grey40", cols = myColours2)
+
+dev.off()
 
 
 
@@ -169,15 +178,15 @@ makeStats_pblh2 <- function(df, species) {
 stats_pblh <- makeStats_pblh2(pblh, "pblh")
 
 setwd(dir_stat_output)
-write.csv(stats_pblh_TOD, file = "stats_pblh_TOD.csv", row.names = F)
-write.csv(stats_pblh, file = "stats_pblh.csv", row.names = F)
+write.csv(stats_pblh_TOD, file = "stats_pblh_TOD_all_models.csv", row.names = F)
+write.csv(stats_pblh, file = "stats_pblh_all_models.csv", row.names = F)
 #remake the same, but using the original model PBL heights 
 
 load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
 load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output.RData"))
+load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 
 
@@ -257,6 +266,8 @@ b <- xyplot(pblh ~ date|campaign + TOD, data = pblh_obs, groups = data_source, t
 
 useOuterStrips(a) + as.layer(b)
 
+
+
 #long 
 
 pblh_obs$data_source <- "OBS"
@@ -286,7 +297,9 @@ a <- xyplot(pblh ~ date|campaign + TOD, data = pblh_mod, groups = data_source, t
        #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
        #ylim = list(c(0,4500)),
        scales = list(x = list(relation = "free")),
-       par.settings = my.settings, auto.key = T, as.table = T)
+       par.settings = my.settings, 
+       #auto.key = list(column = 4, space = "top", points = F, lines = T), 
+       key = myKey, as.table = T)
 useOuterStrips(a)
 
 
@@ -296,7 +309,48 @@ b <- xyplot(pblh ~ date|campaign + TOD, data = pblh_obs, groups = data_source, t
             scales = list(x = list(relation = "free")),
             par.settings = my.settings, auto.key = F, as.table = T, col = "black")
 
+setwd(dir_figures)
+png(filename = "pblh_timeseries.png", width = 12 * 600, height = 8 * 600, res = 600 )
 useOuterStrips(a) + as.layer(b)
+dev.off()
+
+#look at hot days only - all data 
+mod_pblh <- mod_pblh[order(as.POSIXct(mod_pblh$date, format="%Y-%m-%d %H:%M:%S")),]
+day1 <- xyplot(pblh ~ date|campaign, data = subset(mod_pblh, date >= "2013-01-08 00:00 UTC" & date <= "2013-01-09 10:00 UTC"), groups = data_source, type = "l",
+            #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+            #ylim = list(c(0,4500)),
+            scales = list(x = list(relation = "free")),
+            par.settings = my.settings, 
+            #auto.key = list(column = 4, space = "top", points = F, lines = T), 
+            key = myKey,
+            as.table = T)
+
+b <- xyplot(pblh ~ date|campaign, data = subset(pblh_obs, date >= "2013-01-08 00:00 UTC" & date <= "2013-01-09 10:00 UTC"), groups = data_source, type = "p",
+            #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+            #ylim = list(c(0,4500)),
+            scales = list(x = list(relation = "free")),
+            par.settings = my.settings, auto.key = F, as.table = T, col = "black")
+
+day1 + as.layer(b)
+
+
+
+
+day2 <- xyplot(pblh ~ date|campaign, data = subset(mod_pblh, date >= "2013-01-18 00:00 UTC" & date <= "2013-01-19 10:00 UTC"), groups = data_source, type = "l",
+               #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+               #ylim = list(c(0,4500)),
+               scales = list(x = list(relation = "free")),
+               par.settings = my.settings, 
+               auto.key = F, # list(column = 4, space = "top", points = F, lines = T), 
+               as.table = T, key = myKey)
+               
+b2 <- xyplot(pblh ~ date|campaign, data = subset(pblh_obs, date >= "2013-01-18 00:00 UTC" & date <= "2013-01-19 10:00 UTC"), groups = data_source, type = "p",
+            #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+            #ylim = list(c(0,4500)),
+            scales = list(x = list(relation = "free")),
+            par.settings = my.settings, auto.key = F, as.table = T, col = "black")
+
+day2 + as.layer(b2) 
 
 
 #plot diurnal cycles only on the days with complete obs 
@@ -311,7 +365,7 @@ sub_pblh_obs <- subset(pblh_obs, as.character(as.Date(pblh_obs$date, format = "%
 
 sub_mod_pblh <- subset(mod_pblh, as.character(as.Date(pblh_mod$date, format = "%Y-%m-%d", tz = "Etc/GMT-10")) %in% date_list) 
 
-#sub_pblh_ln <- rbind.fill(sub_pblh_mod, sub_pblh_obs)
+
 
 
 d <- timeVariation(sub_mod_pblh, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
@@ -330,6 +384,25 @@ sub_bom_summary <- e$data$hour
 t2 <- xyplot(Mean ~hour|campaign, data = sub_bom_summary, col = "black", pch = 16, strip = mystrip)
 
 t3 + as.layer(t2) #this is a latticeExtra feature - nice 
+
+
+
+
+#to make box plots of values at 6 and 15 local time, on the days with complete obs only 
+sub_pblh_mod <- subset(pblh_mod, as.character(as.Date(pblh_mod$date, format = "%Y-%m-%d", tz = "Etc/GMT-10")) %in% date_list) 
+
+sub_pblh_ln <- rbind.fill(sub_pblh_mod, sub_pblh_obs)
+sub_pblh_ln$data_source <- factor(sub_pblh_ln$data_source, levels = c("OBS","C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+
+
+b1 <- bwplot(pblh ~ data_source|campaign + TOD , data = sub_pblh_ln, as.table = T, ylab = "pbl height (m)",
+             par.settings= my.settings) 
+useOuterStrips(b1)
+
+
+
+
+
 
 
 
