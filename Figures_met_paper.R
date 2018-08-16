@@ -26,8 +26,9 @@ load(paste0(dir_mod,"/site_info.RData"))
 
 #assign variables
 BOM <- bom_data_all_campaigns
+BOM <- subset(BOM, site != "Williamtown_RAAF")
 site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
-site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
+site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4 and up
 
 species_list <- c("temp", "W", "ws","u10", "v10","wd","RH", "prcp", "pblh", "SWR", "pres") #met variables we are interested in 
 species_list_2 <- c("temp", "W", "ws", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
@@ -38,7 +39,7 @@ param_list <- c("date", "site", "campaign", "data_source", species_list)  #compl
 #date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
 #date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 
-stat_list <- c("r", "RMSE", "MB") #list of stats for plotting 
+stat_list <- c("r", "NMB", "MB") #list of stats for plotting #removed RMSE, added NMB - shows ws pattern better
 
 
 #combine all original model data 
@@ -70,6 +71,9 @@ met_ln <- rbind.fill(BOM, model_met)
 #for plotting 
 source(paste0(dir_code,"/lattice_plot_settings.R"))
 
+myKey <- list(column = 4, space = "top", cex = 0.8, text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours, lwd = mylineWidths))
+              #title = "", cex.title = 0.5)
+resolution = 600
 #################
 #TEMPERATURE, W, WS, u10, v10   
 #diurnal cycles, taylorDiagrams, binned quantiles on one panel, with only one legend 
@@ -85,7 +89,8 @@ temp_hour <- a$data$hour
 
 t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
        ylab =species_names[i], type = "l", col = myColours, par.settings = my.settings,
-       auto.key = list(column = 4, space = "top", points = F, lines = T), 
+       #auto.key = list(column = 4, space = "top", points = F, lines = T), 
+       key = myKey,
        scales = list(x = list(alternating = 1)), layout = c(3,1)
        , aspect = 1
        )
@@ -116,6 +121,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
               type = "l", 
               ylab = y.lab[i],
               auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
+              #key = myKey,
               par.settings = my.settings,
               scales = list(alternating = 1, x = list(rot = c(40,0), cex = 0.6, labels = bin_labels)),
               layout = c(3,1),
@@ -124,15 +130,15 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
                 panel.xyplot(...);
                 panel.abline(h = c(0,add_line[i],-(add_line[i])), col = c("black","grey60", "grey60"), lty = c(2,3,3))
               })
-  print(t3, auto.key = list(column = 4, space = "bottom", lines = T, points = F))
+  print(t3 )#auto.key = list(column = 4, space = "bottom", lines = T, points = F))
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_v4.png"), width = 7 * 300, height = 9 * 300, res = 300)
+png(filename = paste0(fig_name[i], "_v7.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
-  print(t1, position = c(0,2/3-1/24.5,1,1), more = TRUE)
-  print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE)
-  print(t3, position = c(0,0,1,1/3+1/65))
+  print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
+  print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+  print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
   
 dev.off() 
 
@@ -158,7 +164,8 @@ for (i in 1:2){
   
   t <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
                 ylab =names_species[i], type = "l", col = myColours, par.settings = my.settings,
-                auto.key = list(column = 4, space = "top", points = F, lines = T), 
+                #auto.key = list(column = 4, space = "top", points = F, lines = T), 
+               key = myKey, 
                 scales = list(x = list(alternating = 1)), ylim = c(-5, 3), layout = c(3,1)
                 , aspect = 1,
                panel =function(...){  
@@ -179,7 +186,7 @@ for (i in 1:2){
 }
 
 setwd(dir_figures)
-png(filename = paste0(fig_name, "_v5.png"), width = 14 * 600, height = 6 * 600, res = 600)
+png(filename = paste0(fig_name, "_v7.png"), width = 14 * 600, height = 6 * 600, res = 600)
 
 print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
 print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
@@ -219,7 +226,7 @@ my.settings_prcp <- my.settings
 my.settings_prcp$superpose.polygon$col <- myColours_prcp
 
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_v4.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_v7.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -239,7 +246,7 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_v4.png", width = 12 * 300, height = 7 * 300, res = 300)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_v7.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
@@ -255,3 +262,113 @@ plot(b2, strip = mystrip)
 dev.off() 
 
 trellis.par.set(my.settings)
+
+
+
+daily_met_ln <- data.frame(timeAverage(met_ln, avg.time = "1 day", type = c("data_source", "campaign")))
+daily_met <- data.frame(timeAverage(met, avg.time = "1 day", type = c("data_source", "campaign")))
+
+
+#plot daily timeseries 
+setwd(paste0(dir_figures, "daily/"))
+
+species <- c("temp", "W","ws", "u10", "v10")
+y.lab1 <- c(expression("Temperature ("* degree * "C)"), expression("water (g kg"^-1*")"), expression("wind speed (m s"^-1*")"), expression("u10 (m s"^-1*")"), expression("v10 (m s"^-1*")"))
+y.lab3 <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g kg"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
+
+fig_name <- c("surface_temperature_panel", "surface_water_content_panel", "surface_wind_speed_panel", "surface_u10_panel", "surface_v10_panel")
+species_col1 <- match(species, names(daily_met_ln))
+
+for (i in 1:length(species)) {
+
+t1 <- xyplot(daily_met_ln[, species_col1[i]] ~date|campaign, groups = data_source, data = daily_met_ln, 
+       scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey, ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
+t2 <- mod_TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours, key = F,
+                       annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+
+
+###binned quantiles 
+
+species_col <- match(paste0(species[i], ".obs"), names(met))
+bins <- c(0,1,5,10,25,50,75,90,95,99,100)/100
+bin_labels <- c("Q1", "Q5", "Q10","Q10-Q25", "Q25-Q50", "Q50-Q75", "Q75-Q90", "Q90", "Q95", "Q99") 
+
+x_test <- quantile(daily_met[,species_col], probs = bins, na.rm = T)
+unik <- !duplicated(x_test, fromLast = T)  ## logical vector of unique values
+x_test <- x_test[unik] ## the values 
+bin_labels <- bin_labels[unik]
+
+daily_met$bin <- cut(daily_met[,species_col], breaks = x_test, include.lowest = T)#, labels = bin_labels)
+stats_bin <- modStats(daily_met, obs = paste0(species[i], ".obs"), mod = paste0(species[i], ".mod"), type = c("data_source", "campaign" ,"bin"))
+
+#plot:  
+
+t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source, 
+             xlab = "" ,#species_names[1], 
+             type = "l", 
+             ylab = y.lab3[i],
+             auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
+             #key = myKey,
+             par.settings = my.settings,
+             scales = list(alternating = 1, x = list(rot = c(40,0), cex = 0.6, labels = bin_labels)),
+             layout = c(3,1),
+             aspect = 1,
+             panel =function(...){  
+               panel.xyplot(...);
+               panel.abline(h = c(0,add_line[i],-(add_line[i])), col = c("black","grey60", "grey60"), lty = c(2,3,3))
+             })
+
+
+png(filename = paste0("daily_",fig_name[i], "_v1.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+
+print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
+print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
+
+
+dev.off() 
+} 
+
+#bubble plot of ws, MB 
+setwd(paste0(dir_figures, "bubble_plots/"))
+#hourly values:
+for (k in 1:length(species_list_2)){
+stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
+#merge stats with site info... (lost when applying modStats)
+stats <- merge(stats, site_info, by = "site")
+
+for (m in 1:length(stat_list)) {
+  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+                       maptype = "roadmap", col = "jet", cex = 1.5, main = y.lab1[k], 
+                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+  png(filename = paste(species_list[k], stat_list[m],"map_v2.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
+  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+  dev.off()
+}
+
+}
+
+#daily values: 
+met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))
+
+for (k in 1:length(species_list_2)){
+  stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
+  #merge stats with site info... (lost when applying modStats)
+  stats <- merge(stats, site_info, by = "site")
+  
+  for (m in 1:length(stat_list)) {
+    a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+                         maptype = "roadmap", col = "jet", cex = 1, main = y.lab1[k],
+                         key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+    png(filename = paste("daily_",species_list[k], stat_list[m],"map.png", sep = '_'), width = 10 * resolution, height = 12 * resolution, res = resolution)
+    print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+    dev.off()
+  }
+  
+} #forgot to make the dots bigger... 
+
+
+
+
+
+

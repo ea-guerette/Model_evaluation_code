@@ -1,4 +1,4 @@
-#figures for the AQ paper 
+#figures for the AQ paper - not quite 
 # not all variables are available everywhere 
 
 library(openair)
@@ -19,7 +19,7 @@ load(paste0(dir_obs,"OEH_obs.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
 load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output.RData"))
+load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
@@ -67,21 +67,23 @@ melted_model_aq <- melt(model_aq, id = c("date", "site", "campaign", "data_sourc
 melted <- merge(melted_OBS, melted_model_aq, by = c("date", "site", "campaign", "variable"))
 
 #for plotting 
-source(paste0(dir_code,"/lattice_plot_settings.R"))
+source(paste0(dir_code,"/lattice_plot_settings_aq.R"))
 source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+myKey <- list(column = 4, space = "top", text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours))
+
 
 setwd(dir_figures)
-png(filename = "Taylor_all.png", width = 8 * 300, height = 12 * 300, res = 300)
+png(filename = "Taylor_all_new.png", width = 8 * 300, height = 12 * 300, res = 300)
 TaylorDiagram(melted, obs = "obs", mod = "mod", normalise = T, 
               group = "variable", type = c("campaign", "data_source"), cex = 0.95, 
               annotate = "", rms.col = "grey40")
 dev.off()
 
 
-#calculate stats -paired so doesn't matter if extra sites 
+#calculate stats -paired so doesn't matter if extra sites (?)
 source(paste0(dir_code,"/makeStats_functions.R"))
 
-for (k in 13:length(species_list_aq)){   #NO, NH4, NO3, SO4, EC do not work -run 1,3,13
+for (k in c(1,3:8,13:14)){   #NO, NH4, NO3, SO4, EC do not work -run 1,3,13
   stats_name <- paste0("stats_",species_list_aq[k])
   stats <- makeStats1(aq, species_list_aq[k])
   #barchart(r ~ data_source, data = stats, main = species_list_aq[k])
@@ -103,7 +105,7 @@ for (k in 13:length(species_list_aq)){   #NO, NH4, NO3, SO4, EC do not work -run
 
 aq_daily <- timeAverage(aq, avg.time = "1 day", type = c("site", "campaign", "data_source"))
 
-for (k in 13:length(species_list_aq)){   
+for (k in c(1,3:8,13:14)){   
   stats_name <- paste0("stats_",species_list_aq[k])
   stats <- makeStats1(aq_daily, species_list_aq[k])
   write.csv(stats, file = paste0(dir_stat_output, "daily_", stats_name, "_dom_avg.csv"), row.names =F)
@@ -114,7 +116,7 @@ for (k in 13:length(species_list_aq)){
 }  
 
 
-#use aq_daily to plot timeseries? 
+#use aq_daily to plot timeseries? YES - will need those for Khalia too 
 
 
 #merge obs and model output into long format 
@@ -180,7 +182,7 @@ for (i in 1:5){
   
   
   setwd(dir_figures_paper)
-  png(filename = paste0(fig_name[i], "_v2.png"), width = 7 * 300, height = 9 * 300, res = 300)
+  png(filename = paste0(fig_name[i], "_v3.png"), width = 7 * 300, height = 9 * 300, res = 300)
   
   print(t1, position = c(0,2/3-1/24.5,1,1), more = TRUE)
   print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE)
@@ -194,3 +196,6 @@ for (i in 1:5){
 sites_PM2.5 <- c("Chullora", "Earlwood", "Liverpool", "Richmond", "Wollongong")
 sites_CO <- c("Chullora", "Liverpool", "Prospect", "Rozelle", "Wollongong")
 sites_SO2 <- c("Albion_Park_Sth", "Bargo", "Bringelly", "Chullora", "Lindfield", "Prospect", "Randwick", "Richmond", "Wollongong")
+
+
+

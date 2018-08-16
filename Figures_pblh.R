@@ -32,7 +32,8 @@ scatterPlot(selectByDate(mod_pblh, start = "17/01/2013", end = "19/01/2013"), x 
 
 source(paste0(dir_code, "lattice_plot_settings.R"))
 #make a generic key for all the plots 
-myKey <- list(column = 4, space = "top", text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours))
+myKey <- list(column = 4, space = "bottom", text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours, lwd = mylineWidths), 
+              title = " ", cex.title = 0.5)
 
 #plot the diurnal variation 
 a <- timeVariation(mod_pblh, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
@@ -114,14 +115,12 @@ pblh <- merge(pblh_obs, pblh_mod, by = c("date", "campaign", "TOD"), suffixes = 
 source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 setwd(dir_figures)
-png(filename = "Taylor_pblh_all_models.png", width = 12 * 600, height = 8 * 600, res = 600)
+png(filename = "Taylor_pblh_all_models_v2.png", width = 12 * 600, height = 8 * 600, res = 600)
 mod_TaylorDiagram(pblh,  obs = "pblh.obs", mod = "pblh.mod", normalise = T, 
                   group = "data_source", type = c("campaign", "TOD"), cex = 1.25, 
-                  annotate = "", rms.col = "grey40", cols = myColours2)
+                  annotate = "", rms.col = "grey40", cols = myColours2, key.pos = "bottom", key.columns = 4, key.title = "  ")
 
 dev.off()
-
-
 
 
 
@@ -294,23 +293,24 @@ useOuterStrips(b1)
 pblh_ln <- pblh_ln[order(as.Date(pblh_ln$date, format="%Y/%m/%d %H:%M:%S")),]
 
 a <- xyplot(pblh ~ date|campaign + TOD, data = pblh_mod, groups = data_source, type = "l",
-       #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+       xlim = list(c(as.POSIXct("2013-01-01"),as.POSIXct("2013-02-15")), c(as.POSIXct("2011-02-07"),as.POSIXct("2011-03-06")), c(as.POSIXct("2012-04-16"),as.POSIXct("2012-05-13"))),
        #ylim = list(c(0,4500)),
-       scales = list(x = list(relation = "free")),
+       scales = list(x = list(relation = "free"), alternating =1),
        par.settings = my.settings, 
        #auto.key = list(column = 4, space = "top", points = F, lines = T), 
-       key = myKey, as.table = T)
+       key = myKey, as.table = T,
+       between = list(x =0.75))
 useOuterStrips(a)
 
 
 b <- xyplot(pblh ~ date|campaign + TOD, data = pblh_obs, groups = data_source, type = "p",
-            #xlim = list(c("01/01/2013","15/02/2013"), c("07/02/2011","06/03/2011"), c("16/04/2012","13/05/2012")),
+            xlim = list(c(as.POSIXct("2013-01-01"),as.POSIXct("2013-02-15")), c(as.POSIXct("2011-02-07"),as.POSIXct("2011-03-06")), c(as.POSIXct("2012-04-16"),as.POSIXct("2012-05-13"))),
             #ylim = list(c(0,4500)),
             scales = list(x = list(relation = "free")),
-            par.settings = my.settings, auto.key = F, as.table = T, col = "black")
+            par.settings = my.settings, auto.key = F, as.table = T, col = "black", between = list(x =0.75))
 
 setwd(dir_figures)
-png(filename = "pblh_timeseries.png", width = 12 * 600, height = 8 * 600, res = 600 )
+png(filename = "pblh_timeseries_v2.png", width = 12 * 600, height = 8 * 600, res = 600 )
 useOuterStrips(a) + as.layer(b)
 dev.off()
 

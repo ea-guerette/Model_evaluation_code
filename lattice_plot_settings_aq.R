@@ -13,8 +13,10 @@ myColours_aq <- c("#386CB0", "#FF7F00",  "#7FC97F", "#F0027F","#1B9E77","#F42E3C
   #c("#1B9E77", "#D95F02", "#000000", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
 #myColours <- c("#1B9E77", "#386CB0", "#000000","#FF7F00", "#F42E3C", "#7570B3") 
 #myColours_2 <-  c("#1B9E77", "#386CB0", "#FF7F00", "#F42E3C", "#7570B3") #for when there is no obs... 
-mylineTypes <- c("dotted","dashed","longdash","dotdash","twodash", "dashed", "solid")
-mylineWidths <- c(2,2,2,2,2,2,2,3)
+
+mylineTypes <- c("dotted","dashed","longdash","twodash", "dashed", "solid", "solid")
+mylineWidths <- c(2,2,2,2,2,2,3)
+
 
 original.settings <- trellis.par.get()
 my.settings <- trellis.par.get()

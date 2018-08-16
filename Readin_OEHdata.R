@@ -25,12 +25,16 @@ oeh_data_2011_2013_long_sub <- subset(oeh_data_2011_2013_long, site %in% site_li
 
 #assign variables to select correct periods 
 campaign <- c("MUMBA","SPS1", "SPS2")
+#hr_start <- c("2012-12-31 14:00 UTC", "2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC")
+#hr_end <-  c("2013-02-15 13:00 UTC","2011-03-06 13:00 UTC", "2012-05-13 13:00 UTC")
+
 date_start <- c("2013-01-01","2011-02-07", "2012-04-16")
 date_end <- c("2013-02-15 23:00:00","2011-03-06 23:00:00","2012-05-13 23:00:00") 
 
 for (i in 1:length(campaign)) {
-  data <- subset(oeh_data_2011_2013_long_sub, date >= as.POSIXct(date_start[i], tz = "Etc/GMT-10") & date <= as.POSIXct(date_end[i],tz = "Etc/GMT-10"))
-  data$campaign <- campaign[i]
+ data <- subset(oeh_data_2011_2013_long_sub, date >= as.POSIXct(date_start[i], tz = "Etc/GMT-10") & date <= as.POSIXct(date_end[i],tz = "Etc/GMT-10"))
+ # data <- subset(oeh_data_2011_2013_long_sub, date >= hr_start[i] & date <= hr_end[i])
+    data$campaign <- campaign[i]
   #data$data_source <- 'OBS'
   #names(data)[c(7,8,10,12,13,15)] <- c("NOx", "O3", "PM2.5", "temp", "wd", "ws")
   data <- transform(data, CO = CO*1000) #not done in OEH_data_formatting

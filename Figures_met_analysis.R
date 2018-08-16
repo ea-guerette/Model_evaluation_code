@@ -31,7 +31,7 @@ load(paste0(dir_mod,"/site_info.RData"))
 BOM <- bom_data_all_campaigns
 site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
 site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
-
+BOM <- subset(BOM, site != "Williamtown_RAAF")
 species_list <- c("temp", "W", "ws","wd","u10", "v10", "RH", "prcp", "pblh", "SWR", "pres") #variable we are interested in 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 species_names <- c(expression("temperature (" * degree * "C)"),  "water mixing ratio (g/kg)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind","RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
@@ -217,14 +217,56 @@ for (i in 1:length(species_list_2)){
 species_col <- match(species_list_2[i], names(met_ln))
 
 for (k in 1:length(model_list)) {
-  d <- qq(data_source ~met_ln[,species_col]|campaign, data = met_ln, subset = (data_source == "OBS"| data_source == model_list[k]), 
+  d <- qq(data_source ~met_ln[,species_col]|campaign, data = met_ln, subset = (data_source == "OBS"| data_source == model_list[k]),          
           layout = c(3,1), scales = list(x = list(alternating = 1)), strip = mystrip, main = species_list_2[i], col = myColours[k])  
   
 png(filename = paste0(model_list[k], "_",species_list_2[i], "_quantile_plot.png"), width = 6 *300, height = 4*300, res = 300)
   print(d)
- dev.off()
+dev.off()
 }
 } 
+
+
+#try something different - one panel per parameter 
+setwd(paste0(dir_figures,"/quantile_plots/panels"))
+resolution = 600
+met_ln$data_type <- "OBS"
+ids <- ids <- which(met_ln$data_source != "OBS")
+met_ln$data_type[ids] <- "MODEL"
+met_ln$data_type <- ordered(met_ln$data_type, levels = c("OBS", "MODEL"))
+
+model_list <- levels(as.factor(met$data_source))
+#rearrange data so that each model has a set of obs
+Data <- met_ln
+Data2 <- NULL
+for(model in 1:length(model_list)){
+  Data2 <- rbind(Data2,
+                 cbind(rbind(Data[Data$data_source == model_list[model],],Data[Data$data_source == 'OBS',]),
+                       model_list[model]))
+
+  }
+names(Data2)[18] <- "model"
+#make the plots
+for (i in 1:length(species_list_2)){
+  
+  species_col <- match(species_list_2[i], names(met_ln))
+  d <- qq(data_type~met_ln$ws|campaign*model, data=Data2)
+  #, as.table = T, col = rep(myColours2,each =3),
+   #       aspect = 1, main = species_list_2[i], scales = list(alternating =1), par.settings = my.settings,
+    #      panel=function(x, col=col,...){
+     #     panel.qq(x,col=col[packet.number()],...) #gets color for each panel
+      #    }
+ # )
+  print(d)
+  }
+
+    png(filename = paste0(species_list_2[i], "_quantile_plot.png"), width = 8 *resolution, height = 12*resolution, res = resolution)
+   
+    dev.off()
+ # }
+
+#printing but missing the bottom 3 models? aspect =1 did not break it. 
+#tried again, this time it gives a warning - min is NA, max is NA... Not sure why it worked that one time - what did I do then?
 
 
 #make bubble plots 
@@ -509,16 +551,18 @@ met_daily_ln <- timeAverage(met_ln, avg.time = "1 day", type = c("data_source","
 met_daily_sum_ln <- timeAverage(met_ln, avg.time = "1 day", statistic = "sum", type = c("data_source", "site","campaign"))
 met_daily_ln$prcp <- met_daily_sum_ln$prcp
 
-for (i in 1:length(species_list)) {
+for (i in 1:length(species_list_2)) {
   for (j in 1:length(date_start)){
     setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/daily/")
     png(filename = paste(species_list[i],campaign[j],"daily_timeseries.png", sep = '_'), width = 9 * 300, height = 6 * 300, res = 300)
-    scatterPlot(selectByDate(met_daily_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source", type = "site", plot.type = "l",
+    scatterPlot(selectByDate(met_daily_ln, start = date_start[j], end = date_end[j]), x = "date", y = species_list[i], ylab = species_names[i], group = "data_source",  plot.type = "p",
                 main = campaign[j], col = myColours, lwd = mylineWidths,lty = mylineTypes,
                 key.position = "top", key.columns =3, key.title = "")
     dev.off()
   }
 }
+
+
 
 
 #plot timeseries of daily max temperature (and daily min?) and save stats 

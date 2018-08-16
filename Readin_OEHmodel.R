@@ -114,6 +114,7 @@ data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
 data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
 data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
 levels(as.factor(data$site))
+data$site <- gsub("Parramatta_north", "Westmead", data$site) 
 
 #make Date into date
 date <- stri_replace_all_fixed(data$Date, "+00:00", "")
@@ -150,6 +151,7 @@ data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
 data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
 data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
 levels(as.factor(data$site))
+data$site <- gsub("Parramatta_north", "Westmead", data$site) 
 
 date <- as.POSIXct(data$Date, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
 data$Date <- date

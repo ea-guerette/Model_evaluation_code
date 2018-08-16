@@ -392,7 +392,7 @@ mod_TaylorDiagram <- function(mydata, obs = "obs", mod = "mod", group = NULL, ty
   
   myform <- formula(paste("R ~ sd.mod", "|", temp, sep = ""))
   
-  scales <- list(x = list(rot = 0, alternating = 1), y = list(rot = 0))
+  scales <- list(x = list(rot = 0, alternating = 1), y = list(rot = 0, alternating = 1)) #modified
   
   pol.name <- sapply(levels(mydata[, group]), function(x) quickText(x, auto.text))
   
@@ -407,8 +407,8 @@ mod_TaylorDiagram <- function(mydata, obs = "obs", mod = "mod", group = NULL, ty
       points = list(col = thecols), pch = pch.orig,
       cex = extra.args$cex, text = list(lab = pol.name, cex = 0.8),
       space = key.pos, columns = key.columns,
-      title = quickText(key.title, auto.text),
-      cex.title = 0.8, lines.title = 3
+      title = key.title,#quickText(key.title, auto.text),
+      cex.title = 1, lines.title = 1
     )
   } else if (key & npol > 1 & combine) {
     key <- list(

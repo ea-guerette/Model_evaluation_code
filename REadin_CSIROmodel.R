@@ -77,7 +77,10 @@ data$W <- q*1000
 ##create NOX, PM2.5, PM10 columns  
 names(data)
 if (i ==1){
-data$prcp <- data$prcp /24 #this is a test - kathryn thinks the data is /day not /hour
+data$prcp <- data$prcp /24 # data is /day not /hour
+}
+if (i ==2){
+  data$prcp <- data$prcp *24 #this is a test - looks way too low - divided by 24 twice?
 }
 data$NOx <- data$NO + data$NO2
 data$PM2.5 <- (data$NH4 + data$NIT + data$ASO4 + data$SS25
