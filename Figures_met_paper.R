@@ -18,7 +18,7 @@ load(paste0(dir_obs,"/BOM_data_updated3.RData"))
 load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
 load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
@@ -32,7 +32,7 @@ site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
 
 species_list <- c("temp", "W", "ws","u10", "v10","wd","RH", "prcp", "pblh", "SWR", "pres") #met variables we are interested in 
 species_list_2 <- c("temp", "W", "ws", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
-species_names <- c(expression("Temperature (" * degree * "C)"),   expression("water mixing ration (g kg"^-1 *")"), expression("wind speed (m s"^-1 *")"), expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"), expression("wind direction (" * degree *")"),"RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
+species_names <- c(expression("Temperature (" * degree * "C)"),   expression("water mixing ratio (g kg"^-1 *")"), expression("wind speed (m s"^-1 *")"), expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"), expression("wind direction (" * degree *")"),"RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 #campaign <- c("MUMBA","SPS1", "SPS2")
@@ -70,7 +70,7 @@ met_ln <- rbind.fill(BOM, model_met)
 
 #for plotting 
 source(paste0(dir_code,"/lattice_plot_settings.R"))
-
+source(paste0(dir_code,"/GoogleMaps_support_met.R"))
 myKey <- list(column = 4, space = "top", cex = 0.8, text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours, lwd = mylineWidths))
               #title = "", cex.title = 0.5)
 resolution = 600
@@ -134,7 +134,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_v7.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0(fig_name[i], "_v9.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
   print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
   print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
@@ -177,7 +177,7 @@ for (i in 1:2){
   
    #taylor diagram 
   
-  x <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours, key = F,
+  x <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                           annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
   
 
@@ -186,7 +186,7 @@ for (i in 1:2){
 }
 
 setwd(dir_figures)
-png(filename = paste0(fig_name, "_v7.png"), width = 14 * 600, height = 6 * 600, res = 600)
+png(filename = paste0(fig_name, "_v8.png"), width = 14 * 600, height = 6 * 600, res = 600)
 
 print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
 print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
@@ -202,7 +202,12 @@ setwd(dir_obs)
 list.files()
 load("MSWEPv1_2.RData")
 
+names(mswep)
+attributes(mswep$date)
+head(mswep)
+
 grid_prcp <- subset(mswep, site %in% site_list)
+
 
 prcp_ln <- rbind.fill(BOM, grid_prcp)
 #make daily averages
@@ -225,8 +230,17 @@ library(latticeExtra)
 my.settings_prcp <- my.settings
 my.settings_prcp$superpose.polygon$col <- myColours_prcp
 
+
+#trying a daily sum precipitation plot 
+xyplot(prcp ~date|campaign, groups = data_source, data = subset(prcp_daily, site %in% "Bankstown_Airport"), col = myColours_prcp,
+       scales = list(x = list(relation = "free")),  type = "l", layout =c(3,1), aspect =1, between = list(x = 1), par.settings = my.settings_prcp )
+#ugly, would need fixing and a legend 
+
+
+
+
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_v7.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_v8.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -246,22 +260,23 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_v7.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_v8.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
                col=myColours_prcp,
                superpose.polygon=list(col= myColours_prcp),
                ylab = "Total precipitation (mm)", ylim = c(0, max(total_prcp2$prcp, na.rm = T)+100),
-               par.settings = my.settings_prcp,
+               par.settings = my.settings_prcp)
                #strip.left = strip.custom(style=1, horizontal = F),
                #auto.key = list(column = 3, space = "top", text = levels(as.factor(total_prcp2$data_source))), #this works, but not really needed, the models
-               par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
 #print(useOuterStrips(b1, strip = mystrip, strip.left = mystrip)) #useOuterStrips ignores specified strip parameters... 
 plot(b2, strip = mystrip)
 dev.off() 
 
 trellis.par.set(my.settings)
+
+
 
 
 
@@ -319,7 +334,7 @@ t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source,
              })
 
 
-png(filename = paste0("daily_",fig_name[i], "_v1.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0("daily_",fig_name[i], "_v2.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
 
 print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
 print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
@@ -329,7 +344,14 @@ print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
 dev.off() 
 } 
 
-#bubble plot of ws, MB 
+
+#bubble plot of ws, MB ##hmmm tried this again on Sept 5 2018 and the call failed, could not load the map, also could not applied the supplied lat lon 
+#I think it is because we are missing an API key? Will have to learn to make these myself now? how do I get the map though?
+#will have to rewrite this using RgoogleMaps - bubbleMap? and maybe use OSM insteda of google 
+#Actually, none of the mapping packages work today - the urls won't load
+#I border authenticated but it did not help
+
+source(paste0(dir_code, "/GoogleMaps_support_met.R"))
 setwd(paste0(dir_figures, "bubble_plots/"))
 #hourly values:
 for (k in 1:length(species_list_2)){
@@ -338,15 +360,28 @@ stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(spec
 stats <- merge(stats, site_info, by = "site")
 
 for (m in 1:length(stat_list)) {
-  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
-                       maptype = "roadmap", col = "jet", cex = 1.5, main = y.lab1[k], 
+#  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+#                       maptype = "roadmap", col = "jet", cex = 1.5, main = y.lab1[k], 
+#                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
+                       col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
                        key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
-  png(filename = paste(species_list[k], stat_list[m],"map_v2.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
+  
+  
+  png(filename = paste(species_list[k], stat_list[m],"map_v4.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
   print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
   dev.off()
 }
 
 }
+
+#to try for Khalia
+a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
+                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"))
+png(filename = paste(species_list[k], stat_list[m],"map_horizontal_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
+dev.off()
 
 #daily values: 
 met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))

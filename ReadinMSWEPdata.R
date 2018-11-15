@@ -76,6 +76,7 @@ timePlot(data, pollutant = "prcp", type = "site")
 }
 
 mswep <- rbind(mswep_SPS1,mswep_SPS2,mswep_MUMBA)
+attributes(mswep$date)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
 save(mswep, file = "MSWEPv1_2.RData")
 

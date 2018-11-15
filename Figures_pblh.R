@@ -200,6 +200,14 @@ sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-1
 models <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 orig_mod <- subset(models, site %in% "Sydney_Airport")
+#westmead <- subset(sps2_mod, site %in% "Westmead")
+#d <-timeVariation(westmead, pollutant = "pblh", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
+#temp_hour <- d$data$hour
+#xyplot(Mean ~hour, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
+       ylab ="pbl height (m)", type = "l", col = myColours, par.settings = my.settings,
+       auto.key = list(column = 4, space = "top", points = F, lines = T), 
+       scales = list(x = list(alternating = 1)), layout = c(1,1)
+       , aspect = 1, ylim = c(0,2000))
 
 c <- timeVariation(orig_mod, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
 temp_hour <- c$data$hour

@@ -18,7 +18,7 @@ load(paste0(dir_obs,"OEH_obs.RData"))
 #load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
 load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 

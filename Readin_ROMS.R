@@ -75,6 +75,7 @@ for (j in 1:length(model)){
 yz_mod <- rbind(ROMS_MUMBA,ROMS_SPS1,ROMS_SPS2, WRFCHEM_MUMBA, WRFCHEM_SPS1, WRFCHEM_SPS2)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
 save(yz_mod, ROMS_MUMBA,ROMS_SPS1,ROMS_SPS2, WRFCHEM_MUMBA, WRFCHEM_SPS1, WRFCHEM_SPS2, file = "YZ.RData")
+load("YZ.RData")
 
 #library(openair)
 #timePlot(WRFCHEM_SPS1, pol = "C5H8", type = "site")

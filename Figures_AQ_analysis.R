@@ -25,7 +25,7 @@ setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Mod
 load("CMAQ_model_output_new.RData")
 load("WRFCHEM_model_output_new.RData")
 #load("WRFCHEM_model_output.RData")
-load("CSIRO_model_output_new_new_fixed.RData")
+load("CSIRO_model_output_new_new_new_fixed.RData")
 load("OEH_model_output.RData")
 load("site_info.RData")
 
@@ -454,3 +454,8 @@ setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/aq_analysis")
 write.csv(stats_nox_overall, file = "stats_NOx_overall.csv", row.names = F)
 write.csv(stats_ozone_overall, file = "stats_O3_overall.csv", row.names = F)
 write.csv(stats_ozone, file ="stats_ozone_by_site.csv", row.names = F)
+
+
+
+##check PM10 for SPS2 
+timeVariation(subset(aq_ln, campaign %in% "SPS2"), pollutant = "PM10", group = "data_source")

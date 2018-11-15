@@ -21,7 +21,7 @@ load(paste0(dir_obs,"/BOM_data_updated3.RData"))
 load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
 load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
 load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
 load(paste0(dir_mod,"/OEH_model_output2.RData"))
 load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
@@ -185,21 +185,21 @@ setwd(paste0(dir_figures,"/stats_by_HOD"))
 
 for (k in 1:length(species_list_2)) {
 
-stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("campaign", "data_source", "HOD"))
+  stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("campaign", "data_source", "HOD"))
 
 
- for (i in 1: length(stat_list)){
- species_col <- match(stat_list[i], names(stats))
- c <- xyplot(stats[,species_col] ~HOD|campaign, data = stats, groups = data_source, type = "l", 
+  for (i in 1: length(stat_list)){
+  species_col <- match(stat_list[i], names(stats))
+  c <- xyplot(stats[,species_col] ~HOD|campaign, data = stats, groups = data_source, type = "l", 
              scales = list(x = list(alternating = 1, at = c(0,3,6,9,12,15,18,21))), 
              ylab = stat_list[i], xlab = "HOD", main = species_list_2[k],
              par.settings = my.settings,
              auto.key = list(column = 1, space = "right", points = F, lines = T),
              layout = c(3,1))
- png(filename = paste0(species_list_2[k], "_", stat_list[i], "_by_HOD.png"), width = 8 *300, 4*300, res = 300)
- print(c)
+   png(filename = paste0(species_list_2[k], "_", stat_list[i], "_by_HOD.png"), width = 8 *300, 4*300, res = 300)
+  print(c)
        
-dev.off()
+  dev.off()
   }
 }
 
@@ -231,7 +231,7 @@ dev.off()
 setwd(paste0(dir_figures,"/quantile_plots/panels"))
 resolution = 600
 met_ln$data_type <- "OBS"
-ids <- ids <- which(met_ln$data_source != "OBS")
+ids <- which(met_ln$data_source != "OBS") #there was a typo here ids <- ids <- which()
 met_ln$data_type[ids] <- "MODEL"
 met_ln$data_type <- ordered(met_ln$data_type, levels = c("OBS", "MODEL"))
 
@@ -239,35 +239,36 @@ model_list <- levels(as.factor(met$data_source))
 #rearrange data so that each model has a set of obs
 Data <- met_ln
 Data2 <- NULL
-for(model in 1:length(model_list)){
+for(m in 1:length(model_list)){
   Data2 <- rbind(Data2,
-                 cbind(rbind(Data[Data$data_source == model_list[model],],Data[Data$data_source == 'OBS',]),
-                       model_list[model]))
+                 cbind(rbind(Data[Data$data_source == model_list[m],],Data[Data$data_source == 'OBS',]),
+                       model_list[m]))
 
   }
 names(Data2)[18] <- "model"
+#cols <- match(species_list_2, names(Data2))
+#Data3 <- Data2[,c(1,2,12,13,14,17,18)]
+
 #make the plots
 for (i in 1:length(species_list_2)){
   
-  species_col <- match(species_list_2[i], names(met_ln))
-  d <- qq(data_type~met_ln$ws|campaign*model, data=Data2)
-  #, as.table = T, col = rep(myColours2,each =3),
-   #       aspect = 1, main = species_list_2[i], scales = list(alternating =1), par.settings = my.settings,
-    #      panel=function(x, col=col,...){
-     #     panel.qq(x,col=col[packet.number()],...) #gets color for each panel
-      #    }
- # )
-  print(d)
-  }
+  species_col <- match(species_list_2[i], names(Data2))
+  d <- qq(data_type~Data2[,species_col]|campaign*model, data=Data2,
+   as.table = T, col = rep(myColours2,each =3),
+         aspect = 1, main = species_list_2[i], scales = list(alternating =1), par.settings = my.settings,
+        panel=function(x, col=col,...){
+       panel.qq(x,col=col[packet.number()],...) #gets color for each panel
+      }
+  )
+ 
+  
 
     png(filename = paste0(species_list_2[i], "_quantile_plot.png"), width = 8 *resolution, height = 12*resolution, res = resolution)
-   
+    print(d)
     dev.off()
- # }
+  }
 
-#printing but missing the bottom 3 models? aspect =1 did not break it. 
-#tried again, this time it gives a warning - min is NA, max is NA... Not sure why it worked that one time - what did I do then?
-
+    
 
 #make bubble plots 
 setwd(paste0(dir_figures,"/bubble_plots"))
