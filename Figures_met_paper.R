@@ -9,18 +9,22 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #save figures on cloudstor 
-dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/"
+dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET"
 
 #load in met observations from BOM  
 load(paste0(dir_obs,"/BOM_data_updated3.RData"))
 
 #load in original model data
-load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+load(paste0(dir_mod,"/models.RData"))
+#load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
+#load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
+#load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
+#load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
+#load(paste0(dir_mod,"/CSIRO_model_output_newTemp.RData"))
+#load(paste0(dir_mod,"/OEH_model_output2.RData"))
+#load(paste0(dir_mod,"/OEH_model_output_newMET.RData"))
+#load(paste0(dir_mod, "/YZ.RData"))
+
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
 
@@ -30,11 +34,13 @@ BOM <- subset(BOM, site != "Williamtown_RAAF")
 site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
 site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4 and up
 
+
 species_list <- c("temp", "W", "ws","u10", "v10","wd","RH", "prcp", "pblh", "SWR", "pres") #met variables we are interested in 
 species_list_2 <- c("temp", "W", "ws", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
 species_names <- c(expression("Temperature (" * degree * "C)"),   expression("water mixing ratio (g kg"^-1 *")"), expression("wind speed (m s"^-1 *")"), expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"), expression("wind direction (" * degree *")"),"RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
+
 #campaign <- c("MUMBA","SPS1", "SPS2")
 #date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
 #date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
@@ -43,18 +49,19 @@ stat_list <- c("r", "NMB", "MB") #list of stats for plotting #removed RMSE, adde
 
 
 #combine all original model data 
-models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#models <- rbind.fill(wrf, cmaq, wrf_chem, csiro_newTemp, oeh_model_new_met, yz_mod)
 #select model data for BOM sites only 
 model_met <- subset(models, site %in% site_list)
 
 #cut to length - some model runs were longer than the actual campaigns 
-mumba_mod <- subset(model_met, campaign %in% "MUMBA")
-mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
-sps1_mod <- subset(model_met, campaign %in% "SPS1")
-sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
-sps2_mod <- subset(model_met, campaign %in% "SPS2")
-sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
-model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
+#mumba_mod <- subset(model_met, campaign %in% "MUMBA")
+#mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+#sps1_mod <- subset(model_met, campaign %in% "SPS1")
+#sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+#sps2_mod <- subset(model_met, campaign %in% "SPS2")
+#sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+#model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 #select variables that are of interest only 
 #indices <- match(species_list, names(model_met)) #not for here - for later 
@@ -84,7 +91,7 @@ add_line <- c(1,1,1.5, 1.5,1.5)
 source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 for (i in 1:5){
-a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign")
+a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign", statistic = "mean")
 temp_hour <- a$data$hour
 
 t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
@@ -97,7 +104,7 @@ t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$
               
 #taylor diagram 
 
-t2 <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours, key = F,
+t2 <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                    annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
 
 ###binned quantiles 
@@ -134,7 +141,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_v9.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0(fig_name[i], "_v10_newMET.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
   print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
   print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
@@ -240,7 +247,7 @@ xyplot(prcp ~date|campaign, groups = data_source, data = subset(prcp_daily, site
 
 
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_v8.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_v10_newMET.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -260,7 +267,7 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_v8.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_v10_newMET.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
@@ -298,7 +305,7 @@ for (i in 1:length(species)) {
 
 t1 <- xyplot(daily_met_ln[, species_col1[i]] ~date|campaign, groups = data_source, data = daily_met_ln, 
        scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey, ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
-t2 <- mod_TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours, key = F,
+t2 <- mod_TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                        annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
 
 
@@ -334,7 +341,7 @@ t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source,
              })
 
 
-png(filename = paste0("daily_",fig_name[i], "_v2.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0("daily_",fig_name[i], "_newMET.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
 
 print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
 print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)

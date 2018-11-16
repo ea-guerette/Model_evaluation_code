@@ -1,5 +1,8 @@
 #PM2.5 components - model evaluation 
 
+library(openair)
+library(plyr)
+
 #Set directories 
 dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
@@ -9,53 +12,49 @@ dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/aq_a
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis/"
 
 
-setwd(dir_obs)
-load("hivol_obs.Rdata")
+#load in hivol data 
+load(paste0(dir_obs, "/hivol_obs.Rdata"))
 
+#load model data 
+load(paste0(dir_mod,"/models.RData"))
 
-setwd(dir_mod)
-load("CMAQ_model_output_new.RData")
-load("WRFCHEM_model_output_new.RData")
-load("CSIRO_model_output_new_new_fixed.RData")
-load("OEH_model_output.RData")
-load("YZ.RData")
+#exclude W-A11 (no PM information)
 
-library(openair)
-library(plyr)
+aq_models <- subset(models, data_source != "W-A11")
+
 
 #THE SELECTED MODEL TIMES ARE WRONG _ THE MODELS ARE IN UTC!!!!! ########
 
-
 #need to cut models to match length of observations, and average from 5-10 and 11-19, and choose appropriate site for the campaign 
 ##SPS1 #need to make this uniform with the other analyses ... 
-models_SPS1 <- rbind.fill(cmaq_SPS1, wrf_chem_SPS1, csiro_SPS1, oeh_model_SPS1, ROMS_SPS1,WRFCHEM_SPS1)
-modsps1 <- subset(models_SPS1, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+
+modsps1 <- subset(aq_models, campaign %in% "SPS1")
 #modsps1 <- subset(modsps1, site %in% "Westmead") #select site early on or not? if not, then can use other sites to see how variable things are 
-sps1am <-  selectByDate(modsps1, hour = 5:10)
+sps1am <-  selectByDate(modsps1, hour = 18:23)
 sps1am <-  timeAverage(sps1am, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps1am$date <- as.POSIXct(paste(sps1am$date, "5:00"))
+sps1am$date <- as.POSIXct(paste(sps1am$date, "18:00"))
 sps1am$TOD <- "AM"
 
-sps1pm <-  selectByDate(modsps1, hour = 11:19)
+sps1pm <-  selectByDate(modsps1, hour = 0:8)
 sps1pm <-  timeAverage(sps1pm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps1pm$date <- as.POSIXct(paste(sps1pm$date, "11:00"))
+sps1pm$date <- as.POSIXct(paste(sps1pm$date, "0:00"))
 sps1pm$TOD <- "PM"
 
 sps1 <- rbind(sps1am, sps1pm)
 sps1_westmead <- subset(sps1, site %in% "Westmead")
 
 ##SPS2
-models_SPS2 <- rbind.fill(cmaq_SPS2, wrf_chem_SPS2, csiro_SPS2, oeh_model_SPS2, ROMS_SPS2, WRFCHEM_SPS2)
-modsps2 <- subset(models_SPS2, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
 
-sps2am <-  selectByDate(modsps2, hour = 5:10)
+modsps2 <- subset(aq_models, campaign %in% "SPS2")
+
+sps2am <-  selectByDate(modsps2, hour = 19:0) #not sure this will work  
 sps2am <-  timeAverage(sps2am, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps2am$date <- as.POSIXct(paste(sps2am$date, "5:00"))
+sps2am$date <- as.POSIXct(paste(sps2am$date, "19:00"))
 sps2am$TOD <- "AM"
 
-sps2pm <-  selectByDate(modsps2, hour = 11:19)
+sps2pm <-  selectByDate(modsps2, hour = 1:9)
 sps2pm <-  timeAverage(sps2pm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps2pm$date <- as.POSIXct(paste(sps2pm$date, "11:00"))
+sps2pm$date <- as.POSIXct(paste(sps2pm$date, "1:00"))
 sps2pm$TOD <- "PM"
 
 sps2 <- rbind(sps2am, sps2pm)
@@ -63,18 +62,18 @@ sps2_westmead <- subset(sps2, site %in% "Westmead")
 
 
 #MUMBA
-models_MUMBA <- rbind.fill(cmaq_MUMBA, wrf_chem_MUMBA, csiro_MUMBA, oeh_model_mumba, ROMS_MUMBA, WRFCHEM_MUMBA)
-modmumba <- subset(models_MUMBA, date >= "2013-01-21 14:00 UTC" & date <= "2013-02-15 13:00 UTC") #shorter dates to match hivol obs
-#modmumba <- subset(modmumba, site %in% "MUMBA")
 
-mumbaam <-  selectByDate(modmumba, hour = 5:10)
+modmumba <- subset(aq_models, campaign %in% "MUMBA") 
+modmumba <- subset(modmumba, date >= "2013-01-21 14:00 UTC" & date <= "2013-02-15 13:00 UTC") #shorter dates to match hivol obs
+
+mumbaam <-  selectByDate(modmumba, hour = 18:23)
 mumbaam <-  timeAverage(mumbaam, avg.time = "day", type = c("campaign", "data_source", "site")) 
-mumbaam$date <- as.POSIXct(paste(mumbaam$date, "5:00"))
+mumbaam$date <- as.POSIXct(paste(mumbaam$date, "18:00"))
 mumbaam$TOD <- "AM"
 
-mumbapm <-  selectByDate(modmumba, hour = 11:19)
+mumbapm <-  selectByDate(modmumba, hour = 0:8)
 mumbapm <-  timeAverage(mumbapm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-mumbapm$date <- as.POSIXct(paste(mumbapm$date, "11:00"))
+mumbapm$date <- as.POSIXct(paste(mumbapm$date, "0:00"))
 mumbapm$TOD <- "PM"
 
 mumba <- rbind(mumbaam, mumbapm)
@@ -94,9 +93,9 @@ pm_mod <- rbind.fill(sps1_westmead, sps2_westmead, mumba_MUMBA)
 
 
 #
-species_pm <- c("NH4", "NO3", "SO4", "EC")
-species_list_aq <- species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp", "NH3")
-param_list <- c("date", "site", "campaign", "data_source", species_list_aq) 
+species_pm <- c("NH4", "NIT", "SO4", "EC")
+species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "ws", "temp", "NH3")
+param_list <- c("date", "site", "campaign", "data_source", species_list_aq, species_pm) 
 
 
 #merge wide 
@@ -186,6 +185,11 @@ barchart(data_source ~ EC + NO3 + SO4 + NH4|campaign, data= na.omit(pm_ln[,c(2:5
 
 means_PM2.5 <- ddply(pm_ln, .(data_source, site, campaign, TOD), numcolwise(mean), na.rm = TRUE)
 barchart(data_source ~  NO3 + SO4 + NH4|campaign + TOD, data= na.omit(means_PM2.5[,c(1:7,9)]), auto.key = TRUE, stack = T)
+
+
+
+#DSN <- NH4 + NIT / SO4 
+
 
 
 library(ggplot2)

@@ -3,6 +3,7 @@
 
 library(openair)
 library(plyr)
+library(reshape2)
 #Set directories 
 dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
@@ -15,21 +16,24 @@ dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_ana
 load(paste0(dir_obs,"OEH_obs.RData"))
 
 #load in original model data
-#load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+load(paste0(dir_mod,"/models.RData"))
+#load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
+#load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
+#load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
+#load(paste0(dir_mod,"/OEH_model_output2.RData"))
+#load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
+
+aq_models <- subset(models, data_source != "W-A11")
+
 
 #assign variables
 OBS <- oeh_obs
 site_list <- levels(as.factor(OBS$site)) #to select only OEH sites 
 site_list <- site_list[-c(9,17:18)] #remove Macarthur (SPS1 only), Warrawong and Westmead (SPS1 and 2 only)
 
-species_list_aq <- species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp")
+species_list_aq <- species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp","HCHO")
 
 param_list <- c("date", "site", "campaign", "data_source", species_list_aq)  #complete list of things to keep from model runs 
 #campaign <- c("MUMBA","SPS1", "SPS2")
@@ -40,9 +44,9 @@ stat_list <- c("r", "RMSE", "MB", "FAC2") #list of stats for plotting
 
 
 #combine all original model data 
-models <- rbind.fill(cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#models <- rbind.fill(cmaq, wrf_chem, csiro, oeh_model, yz_mod)
 #select model data for BOM sites only 
-model_aq <- subset(models, site %in% site_list)
+model_aq <- subset(aq_models, site %in% site_list)
 
 #cut to length - some model runs were longer than the actual campaigns 
 mumba_mod <- subset(model_aq, campaign %in% "MUMBA")
@@ -81,7 +85,7 @@ dev.off()
 
 
 #calculate stats -paired so doesn't matter if extra sites (?)
-source(paste0(dir_code,"/makeStats_functions.R"))
+source(paste0(dir_code,"/makeStats_functions_MSE.R"))
 
 for (k in c(1,3:8,13:14)){   #NO, NH4, NO3, SO4, EC do not work -run 1,3,13
   stats_name <- paste0("stats_",species_list_aq[k])

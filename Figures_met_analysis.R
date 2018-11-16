@@ -15,29 +15,33 @@ dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats -
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
 
 #load in met observations from BOM  
-load(paste0(dir_obs,"/BOM_data_updated3.RData"))
+load(paste0(dir_obs,"/BOM_data_updated3.RData")) #will probably need to recalc q 
 
-#load in original model data
-load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+#load in model data
+load(paste0(dir_mod,"/models.RData"))
+#load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
+#load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
+#load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
+#load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
+#load(paste0(dir_mod,"/OEH_model_output2.RData"))
+#load(paste0(dir_mod, "/YZ.RData"))
+
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
 
 #assign variables
 BOM <- bom_data_all_campaigns
-site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
-site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
 BOM <- subset(BOM, site != "Williamtown_RAAF")
+site_list <- levels(as.factor(BOM$site)) #to select only BOM sites 
+site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4 onwards 
+
+
 species_list <- c("temp", "W", "ws","wd","u10", "v10", "RH", "prcp", "pblh", "SWR", "pres") #variable we are interested in 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 species_names <- c(expression("temperature (" * degree * "C)"),  "water mixing ratio (g/kg)", "wind speed (m/s)", expression("wind direction (" * degree *")"),  "u wind", "v wind","RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
 campaign <- c("MUMBA","SPS1", "SPS2")
-date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
-date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
+#date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
+#date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 
 #model_list <- c("CMAQ", "WRF_10", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not sure why it is in this order???
 #model_list <- c("CMAQ", "WRF_11", "WRF-Chem", "CSIRO", "OEH") #not used as far as I can tell 
@@ -50,19 +54,19 @@ stat_list2 <- c("MB", "RMSE", "MGE")
 #wrf <- subset(wrf, data_source == "W-A11")
 
 #combine all original model data 
-models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
 #select model data for BOM sites only 
 model_met <- subset(models, site %in% site_list)
 
 
-#cut to length - some model runs were longer than the actual campaigns 
-mumba_mod <- subset(model_met, campaign %in% "MUMBA")
-mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
-sps1_mod <- subset(model_met, campaign %in% "SPS1")
-sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
-sps2_mod <- subset(model_met, campaign %in% "SPS2")
-sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
-model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
+#cut to length - some model runs were longer than the actual campaigns - ALREADY DONE
+#mumba_mod <- subset(model_met, campaign %in% "MUMBA")
+#mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+#sps1_mod <- subset(model_met, campaign %in% "SPS1")
+#sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+#sps2_mod <- subset(model_met, campaign %in% "SPS2")
+#sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+#model_met <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 #select variables that are of interest only 
 #indices <- match(species_list, names(model_met)) #not for here - for later 
@@ -109,6 +113,7 @@ for (k in 1:length(species_list_2)){
   }   
 
 met_daily <- timeAverage(met, avg.time = "1 day", type = c("site", "campaign", "data_source"))
+met_weekly <- timeAverage(met, avg.time = "7 day", type = c("site", "campaign", "data_source")) #a week starts on the first day of the campaign, this is just for a MSE test
 
 for (k in 1:length(species_list_2)){   
   stats_name <- paste0("stats_",species_list[k])

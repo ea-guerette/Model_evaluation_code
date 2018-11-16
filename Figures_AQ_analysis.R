@@ -1,3 +1,7 @@
+
+
+###THIS CODE IS OUTDATED!! DO NOT USE 
+
 #AQ analysis script 
 #copy over the first part of the code from met analysis, but change the species list and species name, etc.  
 

@@ -15,18 +15,19 @@ dir_figures_paper <- "C:/Users/eag873/Documents/GitHub/AQ_paper/Figures_AQ_paper
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis/"
 
 #load in OEH observations  
-load(paste0(dir_obs,"OEH_obs.RData"))
+load(paste0(dir_obs,"OEH_obs.RData")) #why not "updated" ? check this 
 
 #load in original model data
-#load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+load(paste0(dir_mod,"/models.RData"))
+#load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
+#load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
+#load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
+#load(paste0(dir_mod,"/OEH_model_output2.RData"))
+#load(paste0(dir_mod, "/YZ.RData"))
 #load in coordinates of all sites 
 load(paste0(dir_mod,"/site_info.RData"))
 
+aq_models <- subset(models, data_source != "W-A11")
 
 #assign variables
 OBS <- oeh_obs
@@ -49,24 +50,42 @@ stat_list <- c("r", "NMB", "MB", "FAC2") #list of stats for plotting - not sure 
 
 
 #combine all original model data 
-models <- rbind.fill(cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+#models <- rbind.fill(cmaq, wrf_chem, csiro, oeh_model, yz_mod)
 #select model data for BOM sites only 
-model_aq <- subset(models, site %in% site_list_aq)
+model_aq <- subset(aq_models, site %in% site_list_aq)
 
 #cut to length - some model runs were longer than the actual campaigns 
-mumba_mod <- subset(model_aq, campaign %in% "MUMBA")
-mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00")
-sps1_mod <- subset(model_aq, campaign %in% "SPS1")
-sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
-sps2_mod <- subset(model_aq, campaign %in% "SPS2")
-sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
-model_aq <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
+#mumba_mod <- subset(model_aq, campaign %in% "MUMBA")
+#mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00")
+#sps1_mod <- subset(model_aq, campaign %in% "SPS1")
+#sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+#sps2_mod <- subset(model_aq, campaign %in% "SPS2")
+#sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+#model_aq <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 #select variables that are of interest only 
 #indices <- match(species_list, names(model_met)) #not for here - for later 
 model_aq <- model_aq[,param_list]
 
+#check a few things in the OBS: 
+a <-timeVariation(OBS, pollutant = "ratio", group = "campaign", type = "site")
+plot(a, subset = "hour")
 
+xyplot(ratio ~ RH|site, data = OBS, groups = campaign,
+       panel = function(x,y, ...) {
+         panel.xyplot(x,y,...)
+         panel.abline(h =15, col = "red")
+               })
+ids <- which(OBS$O3 > 100) #no exceedances of the 1 hour standard
+ids <- which(OBS$O3 > 80) #18! (out of 37536 obs)
+OBS$date[ids] #all during MUMBA 
+sort(OBS$site[ids]) #all in SW 
+OBS$temp[ids] #all reasonably hot (>= 28.7)
+ids <- which(OBS$O3 > 60) #165 hours above 60 ppb
+OBS$date[ids] #mostly during MUMBA, 15 or so in SPS1 
+summary(as.factor(OBS$site[ids])) #not all in SW - 33 in Bargo, 32 in Oakdale, a few in Chullora, Earlwood, Rozelle 
+min(OBS$temp[ids]) #min temp 22.7 (quite cool)
+#so there is maybe something here to compare to
 
 ##prepare dfs for analysis 
 #merge obs and model output into wide format 
@@ -75,6 +94,11 @@ aq <- merge(OBS, model_aq, by = c("date", "site", "campaign"), suffixes = c(".ob
 melted_OBS <- melt(OBS, id = c("date", "site", "campaign"), value.name = "obs")
 
 OBS4 <-  rollingMean(OBS, pollutant = "O3", width = 4, align = "right", data.thresh = 75, new.name = "O3.roll4")
+ids <- which(OBS4$O3 > 80) #4 hour standard exceeded 18 times 
+sort(OBS4$date[ids]) #all during MUMBA # do the dates match? YES
+OBS4$site[ids] # same sites 
+#so there is something here to compare to
+
 model_aq4 <- rollingMean(model_aq, pollutant = "O3", width = 4, align = "right", data.thresh = 75, new.name = "O3.roll4")
 
 aq4 <- merge(OBS4, model_aq4, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
@@ -113,7 +137,7 @@ c <-xyplot(HCHO ~ NO2|campaign*site, data = model_aq, par.settings = my.settings
 useOuterStrips(c) 
 #this is looking busy, but it is interesting - Yang uses afternoon values only 
 
-model_aq_day <- selectByDate(model_aq, hour = c(0:6))
+model_aq_day <- selectByDate(model_aq, hour = c(0:8))
 means_model_aq_day <- ddply(model_aq_day, .(data_source, campaign, site), numcolwise(mean), na.rm = TRUE)
 means_model_aq_day$ratio1 <- means_model_aq_day$HCHO / means_model_aq_day$NO2
 means_model_aq_day <- merge(means_model_aq_day, site_info, by = "site")
