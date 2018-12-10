@@ -82,12 +82,13 @@ for (i in 1:length(campaign)) {
     #calculate water mixing ratio
     es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
     e <- es * (data$RH/100.0)
-    q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+    #q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+    q <- (0.622*e)/(data$pres - (e)) #specific humidity in kg/kg #apparently, the 0.378 was incorrect
     # I want w: grams of vapor per kg of dry air
     data$W <- q*1000
     
     data$NH4 <- data$ANH4I + data$ANH4J 
-    data$NO3 <- data$ANO3I + data$ANO3J
+    data$NIT <- data$ANO3I + data$ANO3J
     data$SO4 <- data$ASO4I + data$ASO4J 
     data$EC <-  data$AECI + data$AECJ
     
@@ -111,7 +112,7 @@ cmaq <- rbind(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output_new.RData")
+save(cmaq_SPS1,cmaq_SPS2,cmaq_MUMBA, cmaq, file = "CMAQ_model_output_final.RData")
 save(site_info, file = "site_info.Rdata")
 
 #load("CMAQ_model_output_new.RData")

@@ -89,12 +89,13 @@ for (i in 1:length(campaign)) {
   #calculate water mixing ratio
   es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
   e <- es * (data$RH/100.0)
-  q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+  #q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+  q <- (0.622*e)/(data$pres - (e))
   # I want w: grams of vapor per kg of dry air
   data$W <- q*1000
   
   data$NH4 <- data$nh4ai + data$nh4aj 
-  data$NO3 <- data$no3ai + data$no3aj 
+  data$NIT <- data$no3ai + data$no3aj 
   data$SO4 <- data$so4ai + data$so4aj
   data$EC <-  data$eci + data$ecj 
   
@@ -118,7 +119,7 @@ wrf_chem <- rbind(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA)
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA,wrf_chem, file = "WRFCHEM_model_output_new.RData")
+save(wrf_chem_SPS1,wrf_chem_SPS2,wrf_chem_MUMBA,wrf_chem, file = "WRFCHEM_model_output_final.RData")
 
 #library(openair)
 #timePlot(wrf_chem_SPS2, pollutant = c("PM2.5", "SO4"), type = "site")

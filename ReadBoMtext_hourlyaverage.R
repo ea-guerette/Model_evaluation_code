@@ -6,6 +6,7 @@
 #05/2017 - adding Bellambi and Wollongong Airport + fixed campaign dates
 #02/2018 - modified again? - I think the start/end dates may be one minute off? leave it for now
 #05/2018 - fixed dates so they match modelled periods (with correct tz, etc.)
+#11/2018 - modified calculation for q
 
 # SET WORKING DIRECTORY #
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute")
@@ -69,7 +70,8 @@ bom_data$v10 <- bom_data$ws * sin(pi*mwd/180)
 
 es <- 6.112*exp((17.67*bom_data$temp)/(bom_data$temp+243.5))
 e <- es * (bom_data$RH/100.0)
-q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+#q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+q <- (0.622*e)/(bom_data$pres - (e)) #Khalia says that this is closer to original Bolton equations 
 # I want w: grams of vapor per kg of dry air
 bom_data$W <- q*1000
 
@@ -133,7 +135,8 @@ bom_data$v10 <- bom_data$ws * sin(pi*mwd/180)
 
 es <- 6.112*exp((17.67*bom_data$temp)/(bom_data$temp+243.5))
 e <- es * (bom_data$RH/100.0)
-q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+#q <- (0.622*e)/(bom_data$pres - (0.378*e)) #specific humidity in kg/kg
+q <- (0.622*e)/(bom_data$pres - (e))
 # I want w: grams of vapor per kg of dry air
 bom_data$W <- q*1000
 
@@ -210,10 +213,10 @@ timePlot(bom_data_mumba, pollutant = "prcp", type = "site", plot.type = "h")
 bom_data_all_campaigns <- rbind(bom_data_sps1, bom_data_sps2, bom_data_mumba)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_updated3.RData")
+save(bom_data_mumba, bom_data_sps1, bom_data_sps2, bom_data_all_campaigns, file = "BOM_data_final.RData")
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data")
-load("BOM_data_updated3.RData")
+load("BOM_data_final.RData")
 
 
 

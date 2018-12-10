@@ -12,7 +12,7 @@ dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET"
 
 #load in met observations from BOM  
-load(paste0(dir_obs,"/BOM_data_updated3.RData"))
+load(paste0(dir_obs,"/BOM_data_final.RData"))
 
 #load in original model data
 load(paste0(dir_mod,"/models.RData"))
@@ -88,7 +88,7 @@ species <- c("temp", "W","ws", "u10", "v10")
 y.lab <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g kg"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
 fig_name <- c("surface_temperature_panel", "surface_water_content_panel", "surface_wind_speed_panel", "surface_u10_panel", "surface_v10_panel")
 add_line <- c(1,1,1.5, 1.5,1.5)
-source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+#source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 for (i in 1:5){
 a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign", statistic = "mean")
@@ -104,9 +104,9 @@ t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$
               
 #taylor diagram 
 
-t2 <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
+t2 <- TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                    annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
-
+#mod_ doesn't work, but TaylorDiagram does - I don't know why!!! 
 ###binned quantiles 
 
 species_col <- match(paste0(species[i], ".obs"), names(met))
@@ -124,7 +124,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
 #plot:  
    
   t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source, 
-              xlab = "" ,#species_names[1], 
+              xlab = "Binned observed values" ,#species_names[1], 
               type = "l", 
               ylab = y.lab[i],
               auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
@@ -144,7 +144,7 @@ setwd(dir_figures)
 png(filename = paste0(fig_name[i], "_v10_newMET.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
   print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
-  print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+  print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
   print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
   
 dev.off() 
@@ -163,7 +163,7 @@ fig_index <- list(c("t1", "t2"), c("t3", "t4"))
 
 
 
-source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+#source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 for (i in 1:2){
   a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign")
@@ -184,7 +184,7 @@ for (i in 1:2){
   
    #taylor diagram 
   
-  x <- mod_TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
+  x <- TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                           annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
   
 
@@ -193,7 +193,7 @@ for (i in 1:2){
 }
 
 setwd(dir_figures)
-png(filename = paste0(fig_name, "_v8.png"), width = 14 * 600, height = 6 * 600, res = 600)
+png(filename = paste0(fig_name, "_v10_newMET.png"), width = 14 * 600, height = 6 * 600, res = 600)
 
 print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
 print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
@@ -274,7 +274,7 @@ b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# g
                col=myColours_prcp,
                superpose.polygon=list(col= myColours_prcp),
                ylab = "Total precipitation (mm)", ylim = c(0, max(total_prcp2$prcp, na.rm = T)+100),
-               par.settings = my.settings_prcp)
+               par.settings = my.settings_prcp,  scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
                #strip.left = strip.custom(style=1, horizontal = F),
                #auto.key = list(column = 3, space = "top", text = levels(as.factor(total_prcp2$data_source))), #this works, but not really needed, the models
 #print(useOuterStrips(b1, strip = mystrip, strip.left = mystrip)) #useOuterStrips ignores specified strip parameters... 
@@ -292,7 +292,7 @@ daily_met <- data.frame(timeAverage(met, avg.time = "1 day", type = c("data_sour
 
 
 #plot daily timeseries 
-setwd(paste0(dir_figures, "daily/"))
+setwd(paste0(dir_figures, "/daily/"))
 
 species <- c("temp", "W","ws", "u10", "v10")
 y.lab1 <- c(expression("Temperature ("* degree * "C)"), expression("water (g kg"^-1*")"), expression("wind speed (m s"^-1*")"), expression("u10 (m s"^-1*")"), expression("v10 (m s"^-1*")"))
@@ -305,7 +305,7 @@ for (i in 1:length(species)) {
 
 t1 <- xyplot(daily_met_ln[, species_col1[i]] ~date|campaign, groups = data_source, data = daily_met_ln, 
        scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey, ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
-t2 <- mod_TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
+t2 <- TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
                        annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
 
 
@@ -326,7 +326,7 @@ stats_bin <- modStats(daily_met, obs = paste0(species[i], ".obs"), mod = paste0(
 #plot:  
 
 t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source, 
-             xlab = "" ,#species_names[1], 
+             xlab = "Binned observed values" ,#species_names[1], 
              type = "l", 
              ylab = y.lab3[i],
              auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
@@ -344,7 +344,7 @@ t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source,
 png(filename = paste0("daily_",fig_name[i], "_newMET.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
 
 print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
-print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
 print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
 
 
@@ -354,9 +354,11 @@ dev.off()
 
 #bubble plot of ws, MB ##hmmm tried this again on Sept 5 2018 and the call failed, could not load the map, also could not applied the supplied lat lon 
 #I think it is because we are missing an API key? Will have to learn to make these myself now? how do I get the map though?
-#will have to rewrite this using RgoogleMaps - bubbleMap? and maybe use OSM insteda of google 
+#will have to rewrite this using RgoogleMaps - bubbleMap? and maybe use OSM instead of google 
 #Actually, none of the mapping packages work today - the urls won't load
 #I border authenticated but it did not help
+setwd("C:/Users/eag873/Documents/R_Model_Intercomparison")
+load("mymap.RData")
 
 source(paste0(dir_code, "/GoogleMaps_support_met.R"))
 setwd(paste0(dir_figures, "bubble_plots/"))
@@ -372,7 +374,8 @@ for (m in 1:length(stat_list)) {
 #                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
   a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
                        col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
-                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"),
+                       map = mymap)
   
   
   png(filename = paste(species_list[k], stat_list[m],"map_v4.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
@@ -385,7 +388,7 @@ for (m in 1:length(stat_list)) {
 #to try for Khalia
 a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
-                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"))
+                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap)
 png(filename = paste(species_list[k], stat_list[m],"map_horizontal_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
@@ -408,6 +411,50 @@ for (k in 1:length(species_list_2)){
   }
   
 } #forgot to make the dots bigger... 
+
+
+
+#prettier version of ws q-q plot 
+setwd(dir_figures)
+#try something different - one panel per parameter 
+#setwd(paste0(dir_figures,"/quantile_plots/panels"))
+resolution = 600
+met_ln$data_type <- "OBS"
+ids <- which(met_ln$data_source != "OBS") #there was a typo here ids <- ids <- which()
+met_ln$data_type[ids] <- "MODEL"
+met_ln$data_type <- ordered(met_ln$data_type, levels = c("OBS", "MODEL"))
+
+model_list <- levels(as.factor(met$data_source))
+#rearrange data so that each model has a set of obs
+Data <- met_ln
+Data2 <- NULL
+for(m in 1:length(model_list)){
+  Data2 <- rbind(Data2,
+                 cbind(rbind(Data[Data$data_source == model_list[m],],Data[Data$data_source == 'OBS',]),
+                       model_list[m]))
+  
+}
+names(Data2)[18] <- "model"
+#cols <- match(species_list_2, names(Data2))
+#Data3 <- Data2[,c(1,2,12,13,14,17,18)]
+
+#make the plots
+
+  
+  species_col <- match("ws", names(Data2))
+  d <- qq(data_type~Data2[,species_col]|model*campaign, data=Data2,
+          as.table = T, col = rep(myColours2,3), cex = 0.8,
+          aspect = 1, main = "", scales = list(alternating =1), par.settings = my.settings,# between = list(y =0.25, x = 0.25),
+          panel=function(x, col=col,...){
+            panel.qq(x,col=col[packet.number()],...) #gets color for each panel
+          }
+  )
+  
+  
+  
+  png(filename = paste0(species_list_2[3], "_quantile_plot_newMET.png"), width = 10 *resolution, height = 14*resolution, res = resolution)
+  useOuterStrips(d)
+  dev.off()
 
 
 

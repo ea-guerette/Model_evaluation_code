@@ -54,14 +54,15 @@ for (j in 1:length(model)){
       
       es <- 6.112*exp((17.67*data$T2)/(data$T2+243.5))
       e <- es * (data$RH/100.0)
-      q <- (0.622*e)/(data$PSFC - (0.378*e)) #specific humidity in kg/kg
+      #q <- (0.622*e)/(data$PSFC - (0.378*e)) #specific humidity in kg/kg
+      q <- (0.622*e)/(data$PSFC - (e)) #specific humidity in kg/kg #apparently, the 0.378 was incorrect
       # I want w: grams of vapor per kg of dry air
       data$W <- q*1000
       
       names(data)[1:33] <- c("CO", "HCHO", "C5H8", "IsopRxnProd", "Methanol", "NH3", 
                        "NO", "NO2", "O3", "SO2", "Terpenes", "Toluene", "Xylenes",
                        "site_lat", "site_lon", "SWR", "pblh", "pres", "temp", "u10", "v10",
-                       "RH", "wd", "ws", "prcp", "PM10", "PM2.5", "EC", "NH4", "NO3", "OC", "P25", "SO4")
+                       "RH", "wd", "ws", "prcp", "PM10", "PM2.5", "EC", "NH4", "NIT", "OC", "P25", "SO4")
       data$NOx <- data$NO + data$NO2
       
       data$campaign <- campaign[i]
@@ -74,8 +75,8 @@ for (j in 1:length(model)){
 
 yz_mod <- rbind(ROMS_MUMBA,ROMS_SPS1,ROMS_SPS2, WRFCHEM_MUMBA, WRFCHEM_SPS1, WRFCHEM_SPS2)
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(yz_mod, ROMS_MUMBA,ROMS_SPS1,ROMS_SPS2, WRFCHEM_MUMBA, WRFCHEM_SPS1, WRFCHEM_SPS2, file = "YZ.RData")
-load("YZ.RData")
+save(yz_mod, ROMS_MUMBA,ROMS_SPS1,ROMS_SPS2, WRFCHEM_MUMBA, WRFCHEM_SPS1, WRFCHEM_SPS2, file = "YZ_final.RData")
+#load("YZ.RData")
 
 #library(openair)
 #timePlot(WRFCHEM_SPS1, pol = "C5H8", type = "site")

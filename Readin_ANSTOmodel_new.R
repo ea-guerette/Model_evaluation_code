@@ -88,7 +88,8 @@ data$wd[ids] = data$wd[ids] + 360
 #calculate water mixing ratio
 es <- 6.112*exp((17.67*data$temp)/(data$temp+243.5))
 e <- es * (data$RH/100.0)
-q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+#q <- (0.622*e)/(data$pres - (0.378*e)) #specific humidity in kg/kg
+q <- (0.622*e)/(data$pres - (e)) #specific humidity in kg/kg #apparently, the 0.378 was incorrect
 # I want w: grams of vapor per kg of dry air
 data$W <- q*1000
 
@@ -108,11 +109,11 @@ timePlot(data, pollutant = "temp", type = "site")
 
 
 #create one large dataframe containing all 3 files 
-wrf <- rbind(wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2)
+wrf <- rbind(wrf_MUMBA,wrf_SPS1,wrf_SPS2)
 
 
 #set directory and save all dataframes 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(wrf_11_MUMBA,wrf_11_SPS1,wrf_11_SPS2,wrf, file = "ANSTO_model_output_new.RData")
+save(wrf_MUMBA,wrf_SPS1,wrf_SPS2,wrf, file = "ANSTO_model_output_final.RData")
 
 #load("ANSTO_model_output.RData")

@@ -12,8 +12,8 @@ dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/aq_a
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis/"
 
 
-#load in hivol data 
-load(paste0(dir_obs, "/hivol_obs.Rdata"))
+#load in hivol data +aalk (SPS) + PM2.5 (MUMBA)
+load(paste0(dir_obs, "/filter_data.Rdata"))
 
 #load model data 
 load(paste0(dir_mod,"/models.RData"))
@@ -22,22 +22,19 @@ load(paste0(dir_mod,"/models.RData"))
 
 aq_models <- subset(models, data_source != "W-A11")
 
-
-#THE SELECTED MODEL TIMES ARE WRONG _ THE MODELS ARE IN UTC!!!!! ########
-
-#need to cut models to match length of observations, and average from 5-10 and 11-19, and choose appropriate site for the campaign 
-##SPS1 #need to make this uniform with the other analyses ... 
+#need to cut models to match length of observations, and average from 5-10 and 11-19 LOCAL TIME, and choose appropriate site for the campaign 
+##SPS1 
 
 modsps1 <- subset(aq_models, campaign %in% "SPS1")
 #modsps1 <- subset(modsps1, site %in% "Westmead") #select site early on or not? if not, then can use other sites to see how variable things are 
-sps1am <-  selectByDate(modsps1, hour = 18:23)
+sps1am <-  selectByDate(modsps1, hour = 18:22)
 sps1am <-  timeAverage(sps1am, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps1am$date <- as.POSIXct(paste(sps1am$date, "18:00"))
+sps1am$date <- as.POSIXct(paste(sps1am$date, "18:00"), tz = "UTC")
 sps1am$TOD <- "AM"
 
-sps1pm <-  selectByDate(modsps1, hour = 0:8)
+sps1pm <-  selectByDate(modsps1, hour = 0:7)
 sps1pm <-  timeAverage(sps1pm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps1pm$date <- as.POSIXct(paste(sps1pm$date, "0:00"))
+sps1pm$date <- as.POSIXct(paste(sps1pm$date, "0:00"), tz = "UTC")
 sps1pm$TOD <- "PM"
 
 sps1 <- rbind(sps1am, sps1pm)
@@ -47,14 +44,14 @@ sps1_westmead <- subset(sps1, site %in% "Westmead")
 
 modsps2 <- subset(aq_models, campaign %in% "SPS2")
 
-sps2am <-  selectByDate(modsps2, hour = 19:0) #not sure this will work  
+sps2am <-  selectByDate(modsps2, hour = 19:23)  
 sps2am <-  timeAverage(sps2am, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps2am$date <- as.POSIXct(paste(sps2am$date, "19:00"))
+sps2am$date <- as.POSIXct(paste(sps2am$date, "19:00"), tz = "UTC")
 sps2am$TOD <- "AM"
 
-sps2pm <-  selectByDate(modsps2, hour = 1:9)
+sps2pm <-  selectByDate(modsps2, hour = 1:8)
 sps2pm <-  timeAverage(sps2pm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-sps2pm$date <- as.POSIXct(paste(sps2pm$date, "1:00"))
+sps2pm$date <- as.POSIXct(paste(sps2pm$date, "1:00"), tz = "UTC")
 sps2pm$TOD <- "PM"
 
 sps2 <- rbind(sps2am, sps2pm)
@@ -66,14 +63,14 @@ sps2_westmead <- subset(sps2, site %in% "Westmead")
 modmumba <- subset(aq_models, campaign %in% "MUMBA") 
 modmumba <- subset(modmumba, date >= "2013-01-21 14:00 UTC" & date <= "2013-02-15 13:00 UTC") #shorter dates to match hivol obs
 
-mumbaam <-  selectByDate(modmumba, hour = 18:23)
+mumbaam <-  selectByDate(modmumba, hour = 18:22)
 mumbaam <-  timeAverage(mumbaam, avg.time = "day", type = c("campaign", "data_source", "site")) 
-mumbaam$date <- as.POSIXct(paste(mumbaam$date, "18:00"))
+mumbaam$date <- as.POSIXct(paste(mumbaam$date, "18:00"), tz = "UTC")
 mumbaam$TOD <- "AM"
 
-mumbapm <-  selectByDate(modmumba, hour = 0:8)
+mumbapm <-  selectByDate(modmumba, hour = 0:7)
 mumbapm <-  timeAverage(mumbapm, avg.time = "day", type = c("campaign", "data_source", "site")) 
-mumbapm$date <- as.POSIXct(paste(mumbapm$date, "0:00"))
+mumbapm$date <- as.POSIXct(paste(mumbapm$date, "0:00"), tz = "UTC")
 mumbapm$TOD <- "PM"
 
 mumba <- rbind(mumbaam, mumbapm)
@@ -82,7 +79,8 @@ mumba_MUMBA <- subset(mumba, site %in% "MUMBA")
 
 pm_models <- rbind.fill(sps1,sps2,mumba)
 setwd(dir_mod)
-save(pm_models, file = "models_AM_PM.RData")
+save(pm_models, file = "models_AM_PM.RData") 
+#will need to rerun this with final version of data 
 
 pm_mod <- rbind.fill(sps1_westmead, sps2_westmead, mumba_MUMBA)
 
@@ -93,33 +91,32 @@ pm_mod <- rbind.fill(sps1_westmead, sps2_westmead, mumba_MUMBA)
 
 
 #
-species_pm <- c("NH4", "NIT", "SO4", "EC")
-species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "ws", "temp", "NH3")
-param_list <- c("date", "site", "campaign", "data_source", species_list_aq, species_pm) 
-
+species_pm <- c("NH4", "NIT", "SO4", "EC", "PM2.5")#,NH3", "SO2", "PM2.5", "SO2")
+#species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "ws", "temp", "NH3")
+param_list <- c("date", "site", "campaign", "data_source", species_pm) #,species_list_aq)
+#NIT missing from current model file - 
 
 #merge wide 
-pm <- merge(hivol_obs, pm_mod, by = c("date", "site", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
+pmc <- merge(filterdata, pm_mod, by = c("date", "TOD", "campaign"), suffixes = c(".obs", ".mod"), all = TRUE)
 #this is wrong, the times don't match - look at what I did for PBLH
 
 #taylor diagrams and stats 
-#this does not work - I removed "data_source from id lisit in melted_obs, did not fix it 
-melted_obs <- melt(hivol_obs, id = c("sample","date",  "campaign", "TOD"), value.name = "obs")
+melted_obs <- melt(filterdata, id = c("sample","date",  "campaign", "TOD"), value.name = "obs")
 melted_pm_mod <- melt(pm_mod[, c(param_list, "TOD")], id = c("date", "site", "campaign", "data_source", "TOD"), value.name = "mod")
 melted <- merge(melted_obs, melted_pm_mod, by = c("date", "campaign", "variable", "TOD"))
 
 
 #for plotting 
 source(paste0(dir_code,"/lattice_plot_settings_aq.R"))
-source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+#source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 setwd(dir_figures)
 png(filename = "Taylor_pm_components.png", width = 8 * 300, height = 12 * 300, res = 300)
-mod_TaylorDiagram(melted, obs = "obs", mod = "mod", normalise = T, 
+TaylorDiagram(subset(melted, data_source != "W-UM2"),obs = "obs", mod = "mod", normalise = T, 
               group = "variable", type = c("campaign", "data_source"), cex = 0.95, 
               annotate = "", rms.col = "grey40")
 dev.off()
-
+#this is a shit plot - really hard to read # better when removing W-UM2
 
 #calculate stats -paired so doesn't matter if extra sites 
 source(paste0(dir_code,"/makeStats_functions.R"))
@@ -129,7 +126,7 @@ for (k in 1:length(species_pm)){   #does not work
   #stats <- makeStats1(pm, species_pm[k])
   #barchart(r ~ data_source, data = stats, main = species_pm[k])
   #write.csv(stats, file = paste0(dir_stat_output, stats_name, "_dom_avg.csv"), row.names =F)
-  stats <- makeStats2(pm, species_pm[k])
+  stats <- makeStats2(pmc, species_pm[k]) #stats for EC won't run - check this
   #barchart(r~ data_source|campaign, data = stats,
   #         par.settings = my.settings,
   #         par.strip.text=list(cex=0.8), scales =list(cex = 0.8, rot = c(40,0), alternating = 2))
@@ -147,44 +144,32 @@ for (k in 1:length(species_pm)){   #does not work
 
 
 #merge in long format 
-hivol_obs$data_source <- "OBS"
-pm_ln <- rbind.fill(hivol_obs, pm_mod)
+filterdata$data_source <- "OBS"
+pmc_ln <- rbind.fill(filterdata, pm_mod)
 
 
 
-a <-   bwplot(EC ~ data_source| campaign + TOD, data = pm_ln,
+a <-   bwplot(SO4 ~ data_source| campaign + TOD, data = pmc_ln,
        par.settings = list(box.umbrella=list(col= "black"), 
        box.dot=list(col= "black"), 
        plot.symbol   = list(col = "black"),
        box.rectangle = list( col = myColours_2_aq),
        dot.symbol = list(col = "black"))) # this is better - change the arrows to black, and the box to the model colour 
 useOuterStrips(a)
-#colours and order are wrong - not sure which are the obs 
+#colours and order are wrong - need to fix this 
 
-bwplot(pm_ln$SO4 ~ pm_ln$data_source|pm_ln$TOD )
-bwplot(pm_ln$SO4 ~ pm_ln$data_source)
+bwplot(pmc_ln$SO4 ~ pmc_ln$data_source|pmc_ln$TOD )
+bwplot(pmc_ln$SO4 ~ pmc_ln$data_source)
 
-b <- bwplot(pm_ln$NO3 ~ pm_ln$data_source|pm_ln$TOD + pm_ln$campaign )
+b <- bwplot(pmc_ln$NO3 ~ pmc_ln$data_source|pmc_ln$TOD + pmc_ln$campaign )
 useOuterStrips(b)
- bwplot(pm_ln$NO3 ~ pm_ln$data_source|pm_ln$TOD )
-bwplot(pm_ln$NO3 ~ pm_ln$data_source)
-bwplot(pm_ln$NO3 ~  pm_ln$data_source |pm_ln$campaign )
-
-bwplot(pm_ln$NH4 ~ pm_ln$data_source|pm_ln$campaign + pm_ln$TOD ) #this is the one that is too high in W-UM2
-bwplot(pm_ln$NH4 ~ pm_ln$data_source|pm_ln$TOD )
-bwplot(pm_ln$NH4 ~ pm_ln$data_source)
-
-bwplot(pm_ln$EC ~ pm_ln$data_source|pm_ln$TOD + pm_ln$campaign )
-bwplot(pm_ln$EC ~ pm_ln$data_source|pm_ln$TOD )
-bwplot(pm_ln$EC ~ pm_ln$data_source)
-
-bwplot(pm_ln$PM2.5 ~ pm_ln$data_source|pm_ln$campaign +pm_ln$TOD)
-
-barchart(data_source ~ EC + NO3 + SO4 + NH4|campaign, data= na.omit(pm_ln[,c(2:5,7:11)]), auto.key = TRUE, stack = T)
+ 
+#for these to work, need to remove NAs... 
+barchart(data_source ~ EC + NIT + SO4 + NH4|campaign, data= pmc_ln, auto.key = TRUE, stack = T)
 #this does not look quite right - need to sum/average first 
 
-means_PM2.5 <- ddply(pm_ln, .(data_source, site, campaign, TOD), numcolwise(mean), na.rm = TRUE)
-barchart(data_source ~  NO3 + SO4 + NH4|campaign + TOD, data= na.omit(means_PM2.5[,c(1:7,9)]), auto.key = TRUE, stack = T)
+means_PM2.5 <- ddply(pmc_ln, .(data_source, site, campaign, TOD), numcolwise(mean), na.rm = TRUE)
+barchart(data_source ~  NIT + SO4 + NH4|campaign + TOD, data= na.omit(means_PM2.5[,c(1:7,9)]), auto.key = TRUE, stack = T)
 
 
 

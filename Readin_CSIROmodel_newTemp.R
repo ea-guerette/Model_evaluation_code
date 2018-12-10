@@ -27,13 +27,7 @@ data <- do.call(rbind, data)
 site_name <- list.files(pattern = ".csv", full.names = FALSE)
 ##remove .csv from file names 
 site_name <- stri_replace_all_fixed(site_name, ".csv", "" )
-#Replace MUMBA_Uni by UOW 
-#if (i == 1) {
- #site_name[c(1,15)] <- c("Albion_Park_Sth", "UOW")
-#}
-#if (i == 2) {
-#  site_name[c(1,8)] <- c("Albion_Park_Sth", "UOW")
-#}
+
 ##populate the vector
 site <- rep(site_name, nrow(data)/length(site_name))
 ##sort names in alphabetical order
@@ -100,11 +94,11 @@ data$PM10 <- data$PM2.5 + data$AS10 + data$SS10 + data$OT10 + data$EC10 + data$O
 
 if (i ==1 ){
   
-  names(data)[c(5, 31, 37, 38)] <- c("NO3g","EC","NO3", "SO4")
+  names(data)[c(31, 38)] <- c("EC", "SO4")
 }
 
 if (i != 1){ 
-names(data)[c(18, 24:25)] <- c("EC","NO3", "SO4")
+names(data)[c(18, 25)] <- c("EC", "SO4")
 } 
 
 #calculate u10 and v10
@@ -127,12 +121,14 @@ assign(dataframe_name,data)
 }
 
 #combine 
-csiro_newTemp <- rbind.fill(csiro_newTemp_SPS1, csiro_newTemp_SPS2, csiro_newTemp_MUMBA)
+csiro <- rbind.fill(csiro_newTemp_SPS1, csiro_newTemp_SPS2, csiro_newTemp_MUMBA)
 
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-save(csiro_newTemp, csiro_newTemp_SPS1, csiro_newTemp_SPS2, csiro_newTemp_MUMBA, file = "CSIRO_model_output_newTemp.RData")
+save(csiro, csiro_newTemp_SPS1, csiro_newTemp_SPS2, csiro_newTemp_MUMBA, file = "CSIRO_model_output_final.RData")
 
 
+
+######################
 
 
 #check versus previous output 
@@ -201,3 +197,5 @@ SPS2 <- rbind.fill(SPS2_mod_met, BOM)
 
 b <- timeVariation(SPS2, pollutant = "temp", group = "data_source", local.tz = "Etc/GMt-10", ci = FALSE, cols = c("red", "blue", "black"))
 print(b, subset = "hour")
+
+

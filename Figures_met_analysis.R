@@ -832,3 +832,11 @@ xyplot()
 
 
 
+#checking es, ws, RH, etc 
+
+met_ln$es <- 6.112*exp((17.67*met_ln$temp)/(met_ln$temp+243.5))
+timeVariation(met_ln, pollutant = "es", type = "campaign", group = "data_source")
+met_ln$Ws <- 0.622*met_ln$es / met_ln$pres
+timeVariation(met_ln, pollutant = "Ws", type = "campaign", group = "data_source")
+met_ln$w <- met_ln$RH /100 * met_ln$Ws
+timeVariation(met_ln, pollutant = "w", type = "campaign", group = "data_source")

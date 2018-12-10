@@ -15,7 +15,7 @@ dir_figures_paper <- "C:/Users/eag873/Documents/GitHub/AQ_paper/Figures_AQ_paper
 dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/aq_analysis/"
 
 #load in OEH observations  
-load(paste0(dir_obs,"OEH_obs.RData")) #why not "updated" ? check this 
+load(paste0(dir_obs,"OEH_obs.RData")) 
 
 #load in original model data
 load(paste0(dir_mod,"/models.RData"))
@@ -33,7 +33,7 @@ aq_models <- subset(models, data_source != "W-A11")
 OBS <- oeh_obs
 site_list_aq <- levels(as.factor(OBS$site)) #to select only OEH sites 
 site_list_aq <- site_list_aq[-c(9,17:18)] #remove Macarthur (SPS1 only), Warrawong and Westmead (SPS1 and 2 only)
-#should I keep Westmead? + add MUMBA? 
+#should I keep Westmead? + add MUMBA? no 
 
 OBS <- subset(OBS, site %in% site_list_aq)
 
@@ -68,23 +68,24 @@ model_aq <- subset(aq_models, site %in% site_list_aq)
 model_aq <- model_aq[,param_list]
 
 #check a few things in the OBS: 
-a <-timeVariation(OBS, pollutant = "ratio", group = "campaign", type = "site")
-plot(a, subset = "hour")
-
-xyplot(ratio ~ RH|site, data = OBS, groups = campaign,
-       panel = function(x,y, ...) {
-         panel.xyplot(x,y,...)
-         panel.abline(h =15, col = "red")
-               })
-ids <- which(OBS$O3 > 100) #no exceedances of the 1 hour standard
-ids <- which(OBS$O3 > 80) #18! (out of 37536 obs)
-OBS$date[ids] #all during MUMBA 
-sort(OBS$site[ids]) #all in SW 
-OBS$temp[ids] #all reasonably hot (>= 28.7)
-ids <- which(OBS$O3 > 60) #165 hours above 60 ppb
-OBS$date[ids] #mostly during MUMBA, 15 or so in SPS1 
-summary(as.factor(OBS$site[ids])) #not all in SW - 33 in Bargo, 32 in Oakdale, a few in Chullora, Earlwood, Rozelle 
-min(OBS$temp[ids]) #min temp 22.7 (quite cool)
+#OBS$ratio <- OBS$O3 / OBS$NOx
+#a <-timeVariation(OBS, pollutant = "ratio", group = "campaign", type = "site")
+#plot(a, subset = "hour")
+#
+#xyplot(ratio ~ RH|site, data = OBS, groups = campaign,
+#       panel = function(x,y, ...) {
+#         panel.xyplot(x,y,...)
+#         panel.abline(h =15, col = "red")
+#               })
+#ids <- which(OBS$O3 > 100) #no exceedances of the 1 hour standard
+#ids <- which(OBS$O3 > 80) #18! (out of 37536 obs)
+#OBS$date[ids] #all during MUMBA 
+#sort(OBS$site[ids]) #all in SW 
+#OBS$temp[ids] #all reasonably hot (>= 28.7)
+#ids <- which(OBS$O3 > 60) #165 hours above 60 ppb
+#OBS$date[ids] #mostly during MUMBA, 15 or so in SPS1 
+#summary(as.factor(OBS$site[ids])) #not all in SW - 33 in Bargo, 32 in Oakdale, a few in Chullora, Earlwood, Rozelle 
+#min(OBS$temp[ids]) #min temp 22.7 (quite cool)
 #so there is maybe something here to compare to
 
 ##prepare dfs for analysis 
@@ -93,10 +94,13 @@ aq <- merge(OBS, model_aq, by = c("date", "site", "campaign"), suffixes = c(".ob
 #melt OBS before adding data_source to OBS dataframe:
 melted_OBS <- melt(OBS, id = c("date", "site", "campaign"), value.name = "obs")
 
+
+
+
 OBS4 <-  rollingMean(OBS, pollutant = "O3", width = 4, align = "right", data.thresh = 75, new.name = "O3.roll4")
-ids <- which(OBS4$O3 > 80) #4 hour standard exceeded 18 times 
-sort(OBS4$date[ids]) #all during MUMBA # do the dates match? YES
-OBS4$site[ids] # same sites 
+#ids <- which(OBS4$O3.roll4 > 80) #4 hour standard exceeded ONCE only  
+#sort(OBS4$date[ids]) #all during MUMBA # do the dates match? YES
+#OBS4$site[ids] # same sites 
 #so there is something here to compare to
 
 model_aq4 <- rollingMean(model_aq, pollutant = "O3", width = 4, align = "right", data.thresh = 75, new.name = "O3.roll4")
@@ -107,8 +111,6 @@ aq4 <- merge(OBS4, model_aq4, by = c("date", "site", "campaign"), suffixes = c("
 OBS$data_source <- "OBS"
 aq_ln <- rbind.fill(OBS, model_aq)
 
-OBS4$data_source <- "OBS"
-aq_ln4 <- rbind.fill(OBS4, model_aq4)
 
 #make daily averages 
 aq_daily <- data.frame(timeAverage(aq, avg.time = "1 day", type = c("site", "data_source", "campaign")))
@@ -116,6 +118,7 @@ aq_ln_daily <- data.frame(timeAverage(aq_ln, avg.time = "1 day", type = c("site"
 daily_aq_ln <- data.frame(timeAverage(aq_ln, avg.time = "1 day", type = c("data_source", "campaign"))) #for overall daily timeseries
 daily_aq <- data.frame(timeAverage(aq, avg.time = "1 day", type = c("data_source", "campaign")))
 
+quantile(aq$O3.obs, probs = 0.995, na.rm = T)
 
 #for plotting 
 source(paste0(dir_code,"/lattice_plot_settings_aq.R"))
@@ -670,7 +673,129 @@ species_list <- "O3.roll4"
 #melted <- merge(melted_OBS, melted_model_aq, by = c("date", "site", "campaign", "variable"))
 
 
+  #modify this for ozone 
+  #try something different - one panel per parameter 
+  #setwd(paste0(dir_figures,"/quantile_plots/panels"))
+  #resolution = 600
+  aq_ln$data_type <- "OBS"
+  ids <- which(aq_ln$data_source != "OBS") #there was a typo here ids <- ids <- which()
+  aq_ln$data_type[ids] <- "MODEL"
+  aq_ln$data_type <- ordered(aq_ln$data_type, levels = c("OBS", "MODEL"))
+  
+  model_list <- levels(as.factor(aq$data_source))
+  #rearrange data so that each model has a set of obs
+  Data <- aq_ln
+  Data2 <- NULL
+  for(m in 1:length(model_list)){
+    Data2 <- rbind(Data2,
+                   cbind(rbind(Data[Data$data_source == model_list[m],],Data[Data$data_source == 'OBS',]),
+                         model_list[m]))
+    
+  }
+  names(Data2)[27] <- "model"
+  #cols <- match(species_list_2, names(Data2))
+  #Data3 <- Data2[,c(1,2,12,13,14,17,18)]
+  
+  #make the plots
+  
+  
+  species_col <- match("O3", names(Data2))
+  d <- qq(data_type~Data2[,species_col]|model*campaign, data=Data2,
+          as.table = T, col = rep(myColours_2_aq,3),
+          aspect = 1, main = "", scales = list(alternating =1), par.settings = my.settings,# between = list(y =0.25, x = 0.25),
+          panel=function(x, col=col,...){
+            panel.qq(x,col=col[packet.number()],...) #gets color for each panel
+          }
+  )
+ 
+  png(filename = paste0(species_list_2[i], "_quantile_plot.png"), width = 8 *resolution, height = 12*resolution, res = resolution)
+  useOuterStrips(d)
+  dev.off()
+  
+  
+#can I use this data to plot correlation? 
+ # xyplot(data_type~Data2[,species_col]|model*campaign, data=Data2)
+  #this did NOT work 
+  
+
 ##check PM10 for SPS2 
   timeVariation(subset(aq_ln, campaign %in% "SPS2"), pollutant = "PM10", group = "data_source")
 stats_pm10<-  modStats(aq, mod = "PM10.mod", obs = "PM10.obs", type = c("campaign", "data_source" ))
   
+
+#categorical statistical measures - Zhang et al 2012 
+
+# a <- forecast exceedances that DID NOT occur
+# b <- forecast exceedances that occurred
+# c <- forecast NONexceedances that occurred 
+# d <- forecast NONexceedances that DID NOT occur
+# e <- actual events #added for my own sanity 
+
+# A <- (b + c) / (a + b + c + d)
+# CSI (critical success index) <- b / (a + b + d)
+# B(ias ratio) <- (a + b)/ (b + d)
+# False alarm ratio <- a / (a + b)
+# False alarm rate <- a / (a + c)
+# Probability of Detection, POD <- b / (b + d) #this is actually b / e
+
+#for hourly values 
+t <- 37 
+
+aq$a <- ifelse(aq$O3.mod > t & aq$O3.obs < t, 1, 0) 
+aq$b <- ifelse(aq$O3.mod > t & aq$O3.obs > t, 1, 0)
+aq$c <- ifelse(aq$O3.mod < t & aq$O3.obs < t, 1, 0) 
+aq$d <- ifelse(aq$O3.mod < t & aq$O3.obs > t, 1, 0) 
+aq$e <- ifelse(aq$O3.obs > t, 1, 0) 
+
+test <- ddply(aq, .(data_source, campaign, site), numcolwise(sum), na.rm = TRUE)
+#OK, this works - but then do I report (A, FAR, etc.) for each site? or as area? 
+
+test <- ddply(aq, .(data_source, campaign), numcolwise(sum), na.rm = TRUE)
+
+test <- within(test, A <- (b + c) / (a + b + c + d)) #all above 98% 
+test <- within(test, FAR <-  a / (a + b)) 
+test <- within(test, CSI <- b / (a + b + d ))
+test <- within(test, POD <-  b / (b + d)) 
+getwd()
+write.csv(test, file = "over37.csv", row.names = F)
+
+
+
+test60 <- test
+test_60_site <- merge(test, site_info, by = "site")
+
+a1 <- GoogleMapsPlot(test_60_site, latitude = "site_lat", longitude = "site_lon", pollutant = "a",  maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = y.lab1[k], # key = BubbleKey(stats, stat_list[m], 0),
+                     key.footer = "#", xlab = "lon", ylab = "lat", type = c( "campaign", "data_source")) #could use own map from RgoogleMap - by setting map = "mymap"
+#the map won't download at home either? 
+
+#for hourly values 
+t <- 80 
+
+aq$a <- ifelse(aq$O3.mod > t & aq$O3.obs < t, 1, 0) 
+aq$b <- ifelse(aq$O3.mod > t & aq$O3.obs > t, 1, 0)
+aq$c <- ifelse(aq$O3.mod < t & aq$O3.obs < t, 1, 0) 
+aq$d <- ifelse(aq$O3.mod < t & aq$O3.obs > t, 1, 0) 
+aq$e <- ifelse(aq$O3.obs > t, 1, 0) 
+
+
+#data =  within(data, wd <- atan2(-u10, -v10) * 180 / pi)
+test80 <- ddply(aq, .(data_source, campaign), numcolwise(sum), na.rm = TRUE)
+test80$A <- (test80$b + test80$c) / (test80$a + test80$b + test80$c + test80$d) #all above 98% 
+test80$FAR <-  test80$a / (test80$a + test80$b)
+
+
+test <- ddply(aq, .(data_source, campaign, site), numcolwise(sum), na.rm = TRUE)
+#OK, this works - but then do I report (A, FAR, etc.) for each site? or as area? 
+
+test <- merge(test, site_info, by = "site")
+names(test)
+
+source(paste0(dir_code,"/GoogleMaps_support_met.R"))
+a1 <- GoogleMapsPlot(test, latitude = "site_lat", longitude = "site_lon", pollutant = "e",
+                     maptype = "roadmap", col = "jet", cex = 1, main = paste("actual events" ),
+                     key.footer = "# of events", xlab = "longitude", ylab = "latitude", type = c("campaign"))
+#png(filename = paste(species_list[k], stat_list[m],"map.png", sep = '_'), width = 8 * 300, height = 8 * 300, res = 300)
+print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+#dev.off()
+#mapping still does not work at uni 

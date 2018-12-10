@@ -1,4 +1,5 @@
 #this is a self-contained TaylorDiagram function 
+#NOv 2018 - BROKEN !
 
 #modification 1: change colour of "observed" dot and text from purple to black
 

@@ -4,17 +4,15 @@
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 
 #load in model data - This bit has to be right!!  
-load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-#load(paste0(dir_mod,"/CSIRO_model_output_new_new_new_fixed.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_newTemp.RData"))
-#load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod,"/OEH_model_output_newMET.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+load(paste0(dir_mod,"/ANSTO_model_output_final.RData"))
+load(paste0(dir_mod,"/CMAQ_model_output_final.RData"))
+load(paste0(dir_mod,"/WRFCHEM_model_output_final.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_final.RData"))
+load(paste0(dir_mod,"/OEH_model_output_final.RData"))
+load(paste0(dir_mod, "/YZ_final.RData"))
 
 #combine models 
-models <- rbind.fill(wrf, cmaq, wrf_chem, csiro_newTemp, oeh_model_new_met, yz_mod)
+models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
 
 #cut them to length 
 mumba_mod <- subset(models, campaign %in% "MUMBA")
@@ -26,6 +24,7 @@ sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-1
 models <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 
-
+setwd(dir_mod)
 save(models, file = "models.RData")
-
+#this version (Dec 10 2018) should have right q, right label and newMET for both CSIRO (with time offset) and OEH
+#this version (Nov 21 2018) has wrong q for most, wrong label for NIT, etc. 
