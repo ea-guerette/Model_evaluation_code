@@ -26,5 +26,5 @@ models <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod)
 
 setwd(dir_mod)
 save(models, file = "models.RData")
-#this version (Dec 10 2018) should have right q, right label and newMET for both CSIRO (with time offset) and OEH
+#this version (Dec 10 2018) should have right q, right label and newMET for both CSIRO and OEH (with time offset) + Bellambi fix
 #this version (Nov 21 2018) has wrong q for most, wrong label for NIT, etc. 

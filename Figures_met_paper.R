@@ -358,10 +358,10 @@ dev.off()
 #Actually, none of the mapping packages work today - the urls won't load
 #I border authenticated but it did not help
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison")
-load("mymap.RData")
+load("mymap2.RData")
 
 source(paste0(dir_code, "/GoogleMaps_support_met.R"))
-setwd(paste0(dir_figures, "bubble_plots/"))
+setwd(paste0(dir_figures))#, "bubble_plots/"))
 #hourly values:
 for (k in 1:length(species_list_2)){
 stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
@@ -372,33 +372,33 @@ for (m in 1:length(stat_list)) {
 #  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
 #                       maptype = "roadmap", col = "jet", cex = 1.5, main = y.lab1[k], 
 #                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
-  a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
-                       col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
-                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"),
-                       map = mymap)
+ # a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
+#                       col = colBubble, cex = 1.5, main = "",  key = BubbleKey(stats, stat_list[m], 0),
+#                       key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"),
+#                       map = mymap2)
+  #almost - but missing bottom site? 
   
-  
-  png(filename = paste(species_list[k], stat_list[m],"map_v4.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
-  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
-  dev.off()
+#  png(filename = paste(species_list[k], stat_list[m],"map_v4.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
+#  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+#  dev.off()
 }
 
 }
 
 #to try for Khalia
 a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
-                     col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0),
-                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap)
-png(filename = paste(species_list[k], stat_list[m],"map_horizontal_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+                     col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
+                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+png(filename = paste(species_list[k], stat_list[m],"horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 
 #daily values: 
-met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))
+#met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))
 
 for (k in 1:length(species_list_2)){
   stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
-  #merge stats with site info... (lost when applying modStats)
+ # merge stats with site info... (lost when applying modStats)
   stats <- merge(stats, site_info, by = "site")
   
   for (m in 1:length(stat_list)) {
@@ -452,12 +452,42 @@ names(Data2)[18] <- "model"
   
   
   
-  png(filename = paste0(species_list_2[3], "_quantile_plot_newMET.png"), width = 10 *resolution, height = 14*resolution, res = resolution)
+  png(filename = paste0(species_list_2[3], "_quantile_plot_newMET.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
   useOuterStrips(d)
   dev.off()
 
 
 
 
+#map of u10 at 3 pm 
+library(dplyr)
+tpm <- selectByDate(met_ln, hour = 15)
+means_tpm <- ddply(tpm, .(data_source, campaign, site), numcolwise(mean), na.rm = TRUE) 
+means_tpm <- merge(means_tpm, site_info, by = "site")
+means_tpm$data_source <- ordered(means_tpm$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+a3 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "u10",  maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "u10", 0), 
+                     key.footer = "u10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+png(filename = paste("u10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+dev.off()
+
+a4 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "v10",  maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "v10", 0), 
+                     key.footer = "v10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+png(filename = paste("v10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a4$plot, strip = mystrip, strip.left = mystrip))
+dev.off()
 
 
+###################
+#would plotting the mean bias be clearer? 
+#NO, the result is hard to interpret 
+tpm_w <- selectByDate(met, hour = 15)
+stats <- modStats(tpm_w, mod = "u10.mod", obs = "u10.obs", type = c("data_source", "campaign", "site")) 
+stats <- merge(stats, site_info, by ="site")
+
+a3 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = "MB",  maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(stats, "MB", 0), 
+                     key.footer = "MB in u10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))

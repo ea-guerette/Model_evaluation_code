@@ -66,6 +66,7 @@ data$prcp <- as.numeric(as.character(data$rnd)) /24 #conversion to mm/hr (Khalia
 #make site names pretty
 
 data$site <- stri_replace_all_fixed(data$site, "-CCAM-level-0.csv", "")
+data$site <- stri_replace_all_fixed(data$site, "_AWS ", "") #to fix Bellambi
 data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
 data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
 data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
@@ -123,6 +124,7 @@ for (i in 1:length(campaign)) {
   #make site names pretty
   
   data$site <- stri_replace_all_fixed(data$site, ".csv", "")
+  data$site <- stri_replace_all_fixed(data$site, "_AWS ", "")
   data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
   data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
   data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")

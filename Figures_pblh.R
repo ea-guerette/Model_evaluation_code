@@ -6,8 +6,10 @@ library(plyr)
 dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
-dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
-dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
+#dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
+dir_stat_output <-  "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats"
+#dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
+dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET"
 
 #load obs 
 load(paste0(dir_obs,"/BOM_pblh.RData"))
@@ -115,10 +117,11 @@ pblh <- merge(pblh_obs, pblh_mod, by = c("date", "campaign", "TOD"), suffixes = 
 source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 setwd(dir_figures)
-png(filename = "Taylor_pblh_all_models_v2.png", width = 12 * 600, height = 8 * 600, res = 600)
-mod_TaylorDiagram(pblh,  obs = "pblh.obs", mod = "pblh.mod", normalise = T, 
-                  group = "data_source", type = c("campaign", "TOD"), cex = 1.25, 
-                  annotate = "", rms.col = "grey40", cols = myColours2, key.pos = "bottom", key.columns = 4, key.title = "  ")
+#png(filename = "Taylor_pblh_all_models_v2.png", width = 12 * 600, height = 8 * 600, res = 600)
+png(filename = "Taylor_pblh_all_models_v3.png", width = 10 * 600, height = 8 * 600, res = 600)
+TaylorDiagram(pblh,  obs = "pblh.obs", mod = "pblh.mod", normalise = T, 
+                  group = "data_source", type = c("campaign", "TOD"), cex = 2,#cex = 1.25, 
+                  annotate = "", rms.col = "grey40", cols = myColours2, key.pos = "bottom", key.columns = 4, key.title = " models ")
 
 dev.off()
 

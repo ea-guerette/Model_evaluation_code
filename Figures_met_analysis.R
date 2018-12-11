@@ -11,11 +11,12 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
-dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-07-20/"
-dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
+#dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-07-20/"
+dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats"
+dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats/visual"
 
 #load in met observations from BOM  
-load(paste0(dir_obs,"/BOM_data_updated3.RData")) #will probably need to recalc q 
+load(paste0(dir_obs,"/BOM_data_final.RData")) #will probably need to recalc q 
 
 #load in model data
 load(paste0(dir_mod,"/models.RData"))
@@ -93,7 +94,7 @@ mod_TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = 
               annotate = "", rms.col = "grey40")
 dev.off()
 
-###
+### starting from here on Dec 11th 2018 - final mod and obs already loaded in 
 
 ##analysis 
 #I made a series of similar functions to output stats 
@@ -131,7 +132,8 @@ for (k in 1:length(species_list_2)){
 
 #make summary plots for the stats  
 require(latticeExtra)
-setwd(paste0(dir_figures, "/visual_stats/"))
+#setwd(paste0(dir_figures, "/visual_stats/"))
+setwd(paste0(dir_figures))#, "/visual_stats/"))
 #species_col <- match(stat_list, names(stats2))
 
 for (k in 1:length(species_list_2)){  
@@ -186,7 +188,7 @@ dev.off()
 
 met$HOD <- as.factor(format(met$date, "%H"))
 
-setwd(paste0(dir_figures,"/stats_by_HOD"))
+setwd(paste0(dir_figures))#,"/stats_by_HOD"))
 
 for (k in 1:length(species_list_2)) {
 
@@ -208,7 +210,7 @@ for (k in 1:length(species_list_2)) {
   }
 }
 
-
+#####stopped here on Dec 11th 2018 
 
 #merge obs and model output into long format 
 BOM$data_source <- "OBS"
