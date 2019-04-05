@@ -5,9 +5,11 @@ library(openair)
 strip = function(...) strip.default(...)
 strip.left = strip.custom(style=1, horizontal = F)
 
-col_bt <- rev(openColours("Blues", 50))
+#col_bt <- rev(openColours("Blues", 50))
+col_bt <- rev(openColours("PuRd", 50))
 col_t <- "white"
-col_at <- openColours("Reds", 50)
+#col_at <- openColours("Reds", 50)
+col_at <- openColours("Oranges", 50)
 colBubble <- c(col_bt, col_t, col_at) 
 
 
@@ -23,4 +25,6 @@ mykey_b <- list(col = colBubble, at = breaks)
 
 return(mykey_b)
 }
+
+
 

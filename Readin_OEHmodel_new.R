@@ -1,6 +1,7 @@
-#this script is to read in model output from OEH - Khalia gave me new files on Nov 10 2018
+#this script is to read in model output from OEH - Khalia gave me new files on Nov 10 2018 - and again in April 2019
 #there are separate files for met and for AQ - need to read both in and combine - AQ files have met variables, discard those 
 #Nov 27th - *final* data from Khalia 
+#Apr 2019 - revised final CCAM data - need to change some variables name - ws and wd, u10, v10 aren't there?
 
 #the output contains surface temp (temp) AND temp at 2m (tscr_ave)
 # surface RH (rh) and 2m RH 
@@ -20,7 +21,7 @@ campaign <- c("SPS1", "SPS2", "MUMBA")
 #read MET files in 
 for (i in 1:length(campaign)) {
 #go to folder: 
-setwd(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/OEH_final_surface_MET/OEH_final_surface_", campaign[i], "_MET"))
+setwd(paste0("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/OEH_revised/Final/Output_CCAM_daily3km_2011_", campaign[i], "_Final"))
 
 ##this reads in the list of files 
 data <- lapply(list.files(pattern = ".csv"),
@@ -47,12 +48,12 @@ data$wd[ids] = data$wd[ids] + 360
 data = within(data, ws <- sqrt(uas^2 + vas^2))
 
 #save surface temperature under a different name
-data$surf_temp <- data$temp - 273.15
-data$surf_rh <- data$rh
+data$temp10 <- data$temp - 273.15
+data$rh10 <- data$rh
 
-data$temp <- as.numeric(as.character(data$tscr_ave)) - 273.15
-data$RH <- as.numeric(as.character(data$rhscrn))
-data$W <- as.numeric(as.character(data$qgscrn)) *1000
+data$temp <- data$tscr_ave - 273.15
+data$RH <- data$rhscrn
+data$W <- data$qgscrn *1000
 
 data$prcp <- as.numeric(as.character(data$rnd)) /24 #conversion to mm/hr (Khalia says original units are mm/day) 
 
@@ -71,7 +72,7 @@ data$site <- stri_replace_all_fixed(data$site, "_AWS", "")
 data$site <- stri_replace_all_fixed(data$site, "_AMO", "")
 data$site <- stri_replace_all_fixed(data$site, "_Albion_Park", "")
 levels(as.factor(data$site))
-#data$site <- gsub("Parramatta_north", "Westmead", data$site) 
+data$site <- gsub("Parramatta_north", "Westmead", data$site) 
 
 #make Date into date
 date <- stri_replace_all_fixed(data$Date, "+00:00", "")
@@ -80,19 +81,19 @@ date <- date - 3600 # I suspect data is 1:24
 data$Date <- date
 
 #select variables 
-data <- data[,c(1,5:7,14,15,19:23,26,27,28)]
+data <- data[,c(1,5:7,13,14,20:24,27:29)] #had to change this 
 #rename variables 
-names(data)[c(1,3,5,6)] <- c("date", "pres","u10", "v10")
+names(data)[c(1,3,5,6)] <- c("date", "pres","u10", "v10") #
 
-dataframe_name <- paste0("oeh_model_final_met_",campaign[i]) 
+dataframe_name <- paste0("oeh_model_revised_final_met_",campaign[i]) 
 assign(dataframe_name,data)
 
 }
 
-oeh_model_final_met <- rbind.fill(oeh_model_final_met_SPS1, oeh_model_final_met_SPS2, oeh_model_final_met_MUMBA)
+oeh_model_final_met <- rbind.fill(oeh_model_revised_final_met_SPS1, oeh_model_revised_final_met_SPS2, oeh_model_revised_final_met_MUMBA)
 ###############
-#setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
-#save(oeh_model_final_met, oeh_model_final_met_SPS1,oeh_model_final_met_SPS2, oeh_model_final_met_MUMBA, file = "OEH_model_output_newMET.RData")
+setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/")
+save(oeh_model_final_met, file = "OEH_model_output_newMET_revised.RData")
 
 
 #Still need to deal with the AQ files - and merge both  

@@ -7,6 +7,9 @@
 #02/2018 - modified again? - I think the start/end dates may be one minute off? leave it for now
 #05/2018 - fixed dates so they match modelled periods (with correct tz, etc.)
 #11/2018 - modified calculation for q
+#04/2019 - noticed times are slightly wrong -rerunning to fix tz (not sure why it's wrong again!! setting system env variable)
+
+Sys.setenv(TZ = "Etc/GMT-10")
 
 # SET WORKING DIRECTORY #
 setwd("C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/Monk06062016OneMinute")
@@ -34,8 +37,11 @@ stn_no <- c("stn20","stn21","stn22","stn23","stn24","stn25")
 period <- c("MUMBA", "SPS2", "SPS1")
 period_start <-c("2012-12-21 00:01", "2012-04-16 00:01", "2011-02-07 00:01")
 period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
-hr_start <- c("2012-12-31 14:00 UTC", "2012-04-15 14:00 UTC", "2011-02-06 14:00 UTC")
-hr_end <-  c("2013-02-15 13:00 UTC", "2012-05-13 13:00 UTC","2011-03-06 13:00 UTC")
+#hr_start <- c("2012-12-31 14:00 UTC", "2012-04-15 14:00 UTC", "2011-02-06 14:00 UTC")
+#hr_end <-  c("2013-02-15 13:00 UTC", "2012-05-13 13:00 UTC","2011-03-06 13:00 UTC")
+hr_start <- c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+hr_end <-  c("2013-02-15 23:00", "2012-05-13 23:00","2011-03-06 23:00")
+
 
 for (i in 1:length(stns)){
 

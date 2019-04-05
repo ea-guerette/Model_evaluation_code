@@ -3,7 +3,7 @@
 
 library(openair)
 
-main_dir <- "C:/Users/eag873/ownCloud"
+main_dir <- "C:/Users/eag873/ownCloud_uow"
 dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
 campaign <- c("MUMBA", "SPS1", "SPS2")
 site <- c("MUMBA", "Westmead", "Westmead")

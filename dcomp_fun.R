@@ -32,7 +32,7 @@ models_list <- levels(as.factor(models$data_source))
 #create a couple of list to save output to 
 #dat_list <- list() #moved to loop in case not all models have the same number of sites 
 
-species <- "PM2.5"  #make this a list ? O3, PM2.5, ws 
+species <- "NOx"  #make this a list ? O3, PM2.5, ws 
 
 
 data_list <- list()
@@ -68,7 +68,7 @@ for (i in 1:length(campaigns_list)){
    # names_res <- paste0("decomp_mod_", species, "_", campaigns_list[i])
    #assign(names_res, res)
 }
-names_res <- paste0("decomp_mod_", species)
+names_res <- paste0("decomp_mod")
 mod_results <- do.call(rbind, res_list)
 assign(names_res, mod_results)
 rm(mod_results)
@@ -104,13 +104,13 @@ for (i in 1:length(campaigns_list)){
 }
 
 obs_results <-  do.call(rbind, cam_res_list)
-names_data <- paste0("decomp_obs_", species)
+names_data <- paste0("decomp_obs")
 assign(names_data, obs_results)
 rm(obs_results)
 
-
+dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Campaign data/"
 #for ws, temp?, W? - load BOM observations  
-load(paste0(dir_obs,"/BOM_data_updated3.RData")) #will probably need to recalc q 
+load(paste0(dir_obs,"/BOM_data_final.RData")) 
 
 library(plyr)
 
@@ -141,22 +141,28 @@ for (i in 1:length(campaigns_list)){
 }
 
 met_results <-  do.call(rbind, cam_res_list)
-names_data <- paste0("decomp_obs_", species)
+names_data <- paste0("decomp_obs")
 assign(names_data, met_results)
 
 
 
 ###########################
+#plot BL, etc. by site 
 
 
+xyplot(BL ~ date|campaign, data = decomp_obs, groups = site, scales = list(x = list(relation = "free")))
+xyplot(SY ~ date|campaign, data = decomp_obs, groups = site, scales = list(x = list(relation = "free")))
+xyplot(DU ~ date|campaign, data = decomp_obs, groups = site, scales = list(x = list(relation = "free")))
+xyplot(ID ~ date|campaign, data = decomp_obs, groups = site, scales = list(x = list(relation = "free")))
 #for analysis 
-decomp_O3 <- merge(decomp_mod_O3, decomp_obs_O3, suffixes = c(".mod", ".obs"), by = c("date", "site", "campaign"))
+#decomp_O3 <- merge(decomp_mod_O3, decomp_obs_O3, suffixes = c(".mod", ".obs"), by = c("date", "site", "campaign"))
 
-dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
-source(paste0(dir_code,"/makeStats_functions_MSE.R"))
+#library(openair)
+#dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
+#source(paste0(dir_code,"/makeStats_functions_MSE.R"))
 
-stats <- makeStats2(decomp_O3, "ID")
-barchart( bias + var +mMSE ~data_source |campaign, data= na.omit(stats), auto.key = TRUE, stack = T, horizontal = F)
+#stats <- makeStats2(decomp_O3, "ID")
+#barchart( bias + var +mMSE ~data_source |campaign, data= na.omit(stats), auto.key = TRUE, stack = T, horizontal = F)
 #OK this works BUT, need to make stats for all 4 components, combine them, and plot BL, SY, DU, ID side-by-side, one row per campaign
 #can you figure out colours related to R2 like in Solazzo et al 2016? 
 #our synoptic error is much greater than AQMEII's, also ID!! 
@@ -166,4 +172,164 @@ barchart( bias + var +mMSE ~data_source |campaign, data= na.omit(stats), auto.ke
 
 #look at how variable MSE_sum is - bubble plots - one per component, show only interesting one(s) 
 #use makeStats3, site_info, etc. 
+#I made a series of similar functions to output stats 
+library(openair)
+dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
+dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET"
 
+
+source(paste0(dir_code,"/makeStats_functions_MSE.R"))
+source(paste0(dir_code,"/lattice_plot_settings.R"))
+
+decomp <- merge(decomp_mod, decomp_obs, suffixes = c(".mod", ".obs"), by = c("date", "site", "campaign"))
+
+
+#stats <- makeStats2(decomp_u10, "SY")
+#barchart( bias + var +mMSE ~data_source |campaign, data= na.omit(stats), auto.key = TRUE, stack = T, horizontal = F)
+
+#need stats for each component, then by component and by campaign (1 row of component per campaign)
+
+component_list <- c("BL", "SY", "DU", "ID")
+stat_res_list <- list()
+for (c in (1: length(component_list))) {
+  stats <- makeStats2(decomp,component_list[c])
+  stats$comp <- component_list[c]
+  stat_res_list[[c]] <- stats
+}
+stat_results <-  do.call(rbind, stat_res_list)
+stat_results$comp <- ordered(stat_results$comp, levels = c("BL", "SY", "DU", "ID"))
+
+library(latticeExtra)
+p <- barchart( bias + var +mMSE ~data_source |comp + campaign , data= na.omit(stat_results), auto.key = TRUE, stack = T, horizontal = F, ylab = "MSE = bias + var +mMSE")
+useOuterStrips(p,strip = mystrip, strip.left = mystrip)
+#works! Can I get the colour for mMSE from r? 
+#trellis.par.get()
+#default cols are  "#CCFFFF" "#FFCCFF" "#CCFFCC" "#FFE5CC" "#CCE6FF" "#FFFFCC" "#FFCCCC"
+
+q <- quantile(stat_results$r, na.rm = T)
+cols_mMSE <- openColours("Greens", 4)
+
+#not pretty, but make 4 columns, one per quantile 
+
+stat_results$mMSE1 <- 0
+ids <- which(stat_results$r <= q[2])
+stat_results$mMSE1[ids] <- stat_results$mMSE[ids]
+stat_results$mMSE2 <- 0
+ids <- which(stat_results$r <= q[3] & stat_results$r > q[2])
+stat_results$mMSE2[ids] <- stat_results$mMSE[ids]
+stat_results$mMSE3 <- 0
+ids <- which(stat_results$r <= q[4] & stat_results$r > q[3])
+stat_results$mMSE3[ids] <- stat_results$mMSE[ids]
+stat_results$mMSE4 <- 0
+ids <- which(stat_results$r <= q[5] & stat_results$r > q[4])
+stat_results$mMSE4[ids] <- stat_results$mMSE[ids]
+
+setwd(dir_figures)
+chartKey <- list(column = 3, space = "top", cex = 0.8, 
+                 text = list(c("Bias", "Variance", "mMSE")), rectangles = list(col = c("#CCFFFF", "#FFCCFF", "#CCFFCC")))
+resolution = 600
+
+p <- barchart(bias + var + mMSE1+ mMSE2+mMSE3+mMSE4~data_source |comp + campaign , data= na.omit(stat_results), main = species,  scales = list(x = list(rot = 45)),# y = list(relation = "free")), 
+         auto.key = F, stack = T, horizontal = F, ylab = "MSE = bias + var +mMSE", col = c("#CCFFFF", "#FFCCFF", cols_mMSE), 
+         key = chartKey)
+
+
+png(filename = paste0(species, "_decomp_barchart_newMET.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
+useOuterStrips(p, strip = mystrip, strip.left = mystrip)
+dev.off()
+
+#, col = col_vector,#[1:12],
+#         scales = list(x = list(rot = 45)), 
+
+
+#is it worth doing the same, for each site individually? 
+#Not that hard, use makeStats3 instead of 2 and loop through sites to make barcharts 
+
+
+
+
+#create colours for mMSE based on associated r value 
+#try quantiles?
+q <- quantile(stat_results$r)
+cols_mMSE <- openColours("Greens", 4)
+stat_results$col_mMSE <- cols_mMSE[1]
+ids <- which(stat_results$r < q[5])
+stat_results$col_mMSE[ids] <- cols_mMSE[4]
+ids <- which(stat_results$r < q[4])
+stat_results$col_mMSE[ids] <- cols_mMSE[3]
+ids <- which(stat_results$r < q[3])
+stat_results$col_mMSE[ids] <- cols_mMSE[2]
+
+col_df <-  data.frame(bias_col = as.character(rep("#CCFFFF", length(stat_results$col_mMSE))), var_col = as.character(rep("#FFCCFF", length(stat_results$col_mMSE))), mMSE_cols = as.character(stat_results$col_mMSE ))
+
+
+
+col_list <- list() 
+for(l in 1:length(stat_results$col_mMSE)) {
+  col_list[[l]] <- c("#CCFFFF", "#FFCCFF", stat_results$col_mMSE[l] )
+}
+
+col_vector <- do.call(cbind, col_list)
+
+barchart(bias + var +mMSE ~data_source |comp + campaign , data= na.omit(stat_results), 
+          auto.key = TRUE, stack = T, horizontal = F, ylab = "MSE = bias + var +mMSE", col = col_vector,#[1:12],
+         scales = list(x = list(rot = 45)), 
+         panel=function(x,y,  col=col,...){
+           panel.barchart(y,x,col=col[[subscripts()]],...) #need a colour for each bit of each bar
+         }
+         )
+
+#check panel.superpose, panel.groups 
+     
+ #col = c("#CCFFFF", "#FFCCFF","#CCFFCC", "blue", "red", "green" )) #c("#CCFFFF", "#FFCCFF", stat_results$col_mMSE) )
+#does not work - all same colour - only accepts three colours - need panel function as in the qq plots
+
+
+#what if I melt it? does not work, same as y1+y2+y3... 
+library(reshape2)
+sub_stat_results <- stat_results[,c(1,2,10, 19,20,21,23)]
+melted_stat_results <- melt(sub_stat_results, id = c("data_source", "r","comp", "campaign"), value.name = "stat")
+
+barchart(stat ~data_source |comp + campaign , data= na.omit(melted_stat_results), groups = variable, key = F,
+         auto.key = TRUE, stack = T, horizontal = F, ylab = "MSE = bias + var +mMSE", col = col_list, #[1:12],
+         panel=function(x,y,  col=col,...){
+           panel.barchart(x,y, col=col[[subscripts()]],...) #need a colour for each bit of each bar
+         }
+)
+
+
+
+
+#interaction? 
+#not want I want 
+
+myData <- data.frame(score = c(0,0,1,0,0,3,0,0,1,2,3), percent = c(100,80,20,100,100,100,100,36,9,18,36), marker = c("ER", "PAX", "PAX", "ER", "PAX", "ER", "PAX", "ER", "ER","ER", "ER"), cellType = c("B", "B", "B", "Br","Br","Bre", "Bre", "C", "C", "C", "C"), Malignat = c(T,T,T,F,F,T,T,T,T,T,T))
+palette <- palette(gray(seq(0, 1,len=8)))
+trellis.par.set(list(par.xlab.text=list(cex=0.85)
+                                         , superpose.polygon=list(col=palette())
+                                          , axis.text=list(cex=0.8)))
+
+
+ barchart(percent~cellType|marker
+                    , groups=score
+                    , data=myData
+                    , stack=TRUE
+                    , xlab='N=Normal/Benign, M=Malignant'
+                    , ylab='Percentage of Cores Staining'
+                    , color=palette()
+                    , auto.key = list(points = FALSE, rectangles = TRUE, space = "top")
+                    , scales=list(x=list(rot=70))
+                   , layout=c(1,2)) 
+ 
+ barchart(percent~cellType|marker
+          , groups= interaction(score, Malignat)
+          , data=myData
+          , stack=TRUE
+          , xlab='N=Normal/Benign, M=Malignant'
+          , ylab='Percentage of Cores Staining'
+          # , color=palette() # not doing anything
+          , auto.key = list(points = FALSE, rectangles = TRUE, space =
+                              "top", columns = 2)
+          , scales=list(x=list(rot=70))
+          , layout=c(1,2)) 
+ 

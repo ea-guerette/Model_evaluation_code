@@ -9,9 +9,9 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #save figures on cloudstor 
-dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET"
+dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/REVISED/"
 
-#load in met observations from BOM  
+#load in met observations from BOM 
 load(paste0(dir_obs,"/BOM_data_final.RData"))
 
 #load in original model data
@@ -41,16 +41,13 @@ species_names <- c(expression("Temperature (" * degree * "C)"),   expression("wa
 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 
-#campaign <- c("MUMBA","SPS1", "SPS2")
+campaign <- c("MUMBA","SPS1", "SPS2")
 #date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
 #date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 
 stat_list <- c("r", "NMB", "MB") #list of stats for plotting #removed RMSE, added NMB - shows ws pattern better
+stat_list2 <- c("MB", "cRMS", "r")
 
-
-#combine all original model data 
-#models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
-#models <- rbind.fill(wrf, cmaq, wrf_chem, csiro_newTemp, oeh_model_new_met, yz_mod)
 #select model data for BOM sites only 
 model_met <- subset(models, site %in% site_list)
 
@@ -105,7 +102,7 @@ t1 <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$
 #taylor diagram 
 
 t2 <- TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
-                   annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+                   annotate = "", rms.col = "gray60", normalise = F, layout = c(3,1), cex = 1.6)
 #mod_ doesn't work, but TaylorDiagram does - I don't know why!!! 
 ###binned quantiles 
 
@@ -123,8 +120,8 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
   
 #plot:  
    
-  t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source, 
-              xlab = "Binned observed values" ,#species_names[1], 
+  t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = ordered(stats_bin$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
+              xlab = "Quantiles of observed values" ,#species_names[1], 
               type = "l", 
               ylab = y.lab[i],
               auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
@@ -141,7 +138,7 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_v10_newMET.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0(fig_name[i], "_revised_not_normalised.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
   print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
   print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
@@ -155,51 +152,50 @@ dev.off()
 ##############
 #U10 AND V10  - reduced panels, side by side 
 
-species <- c("u10", "v10")
-y.lab <- c(expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
-fig_name <- "surface_u10_and_v10_panel"
-names_species <- c(expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"))
-fig_index <- list(c("t1", "t2"), c("t3", "t4"))
+#species <- c("u10", "v10")
+#y.lab <- c(expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
+#fig_name <- "surface_u10_and_v10_panel"
+#names_species <- c(expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"))
+#fig_index <- list(c("t1", "t2"), c("t3", "t4"))
 
 
 
 #source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
-for (i in 1:2){
-  a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign")
-  temp_hour <- a$data$hour
-  
-  t <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
-                ylab =names_species[i], type = "l", col = myColours, par.settings = my.settings,
+#for (i in 1:2){
+#  a <- timeVariation(met_ln, pollutant = species[i], group = "data_source", type = "campaign")
+#  temp_hour <- a$data$hour
+#  
+#  t <-  xyplot(Mean ~hour|campaign, data = temp_hour, groups = ordered(temp_hour$variable, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
+#                ylab =names_species[i], type = "l", col = myColours, par.settings = my.settings,
                 #auto.key = list(column = 4, space = "top", points = F, lines = T), 
-               key = myKey, 
-                scales = list(x = list(alternating = 1)), ylim = c(-5, 3), layout = c(3,1)
-                , aspect = 1,
-               panel =function(...){  
-                 panel.xyplot(...);
-                 panel.abline(h = 0, col = "black", lty = 2)
-               }
-  )
-  assign(fig_index[[i]][1], t)
+#               key = myKey, 
+#               scales = list(x = list(alternating = 1)), ylim = c(-5, 3), layout = c(3,1)                , aspect = 1,
+        #       panel =function(...){  
+        #         panel.xyplot(...);
+        #         panel.abline(h = 0, col = "black", lty = 2)
+        #       }
+#  )
+#  assign(fig_index[[i]][1], t)
   
    #taylor diagram 
   
-  x <- TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
-                          annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+#  x <- TaylorDiagram(met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
+#                          annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
   
 
-  assign(fig_index[[i]][2], x)
+#  assign(fig_index[[i]][2], x)
   
-}
+#}
 
-setwd(dir_figures)
-png(filename = paste0(fig_name, "_v10_newMET.png"), width = 14 * 600, height = 6 * 600, res = 600)
+#setwd(dir_figures)
+#png(filename = paste0(fig_name, "_v10_newMET.png"), width = 14 * 600, height = 6 * 600, res = 600)
 
-print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
-print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
-print(t3, position = c(0.5,0.5-1/16,1,1), more = TRUE)
-print(t4, trellis.par.set(my.settings), position = c(0.5,0,1,0.5))
-dev.off()
+#print(t1, position = c(0,0.5-1/16,0.5,1), more = TRUE)
+#print(t2, trellis.par.set(my.settings), position = c(0,0,0.5,0.5), more = TRUE)
+#print(t3, position = c(0.5,0.5-1/16,1,1), more = TRUE)
+#print(t4, trellis.par.set(my.settings), position = c(0.5,0,1,0.5))
+#dev.off()
 
 
 
@@ -247,7 +243,7 @@ xyplot(prcp ~date|campaign, groups = data_source, data = subset(prcp_daily, site
 
 
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_v10_newMET.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_revised.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -267,7 +263,7 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_v10_newMET.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_revised.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
@@ -284,15 +280,14 @@ dev.off()
 trellis.par.set(my.settings)
 
 
-
-
+#make daily means plots: 
 
 daily_met_ln <- data.frame(timeAverage(met_ln, avg.time = "1 day", type = c("data_source", "campaign")))
 daily_met <- data.frame(timeAverage(met, avg.time = "1 day", type = c("data_source", "campaign")))
 
-
+summary(models$wd, na.rm= T) #why negative wd??
 #plot daily timeseries 
-setwd(paste0(dir_figures, "/daily/"))
+setwd(paste0(dir_figures))
 
 species <- c("temp", "W","ws", "u10", "v10")
 y.lab1 <- c(expression("Temperature ("* degree * "C)"), expression("water (g kg"^-1*")"), expression("wind speed (m s"^-1*")"), expression("u10 (m s"^-1*")"), expression("v10 (m s"^-1*")"))
@@ -303,10 +298,10 @@ species_col1 <- match(species, names(daily_met_ln))
 
 for (i in 1:length(species)) {
 
-t1 <- xyplot(daily_met_ln[, species_col1[i]] ~date|campaign, groups = data_source, data = daily_met_ln, 
+t1 <- xyplot(daily_met_ln[, species_col1[i]] ~date|campaign, groups = ordered(daily_met_ln$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), data = daily_met_ln, 
        scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey, ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
 t2 <- TaylorDiagram(daily_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
-                       annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+                       annotate = "", rms.col = "gray60", normalise = F, layout = c(3,1), cex = 1.6)
 
 
 ###binned quantiles 
@@ -325,8 +320,8 @@ stats_bin <- modStats(daily_met, obs = paste0(species[i], ".obs"), mod = paste0(
 
 #plot:  
 
-t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source, 
-             xlab = "Binned observed values" ,#species_names[1], 
+t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = ordered(stats_bin$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
+             xlab = "Quantiles of observed values" ,#species_names[1], 
              type = "l", 
              ylab = y.lab3[i],
              auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
@@ -341,12 +336,11 @@ t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = data_source,
              })
 
 
-png(filename = paste0("daily_",fig_name[i], "_newMET.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0("daily_",fig_name[i], "not_normalised_revised.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
 
 print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
 print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
 print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
-
 
 dev.off() 
 } 
@@ -358,10 +352,16 @@ dev.off()
 #Actually, none of the mapping packages work today - the urls won't load
 #I border authenticated but it did not help
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison")
-load("mymap2.RData")
-
+#load("mymap2.RData")
+load("mymap3.RData") #colour satellite map 
+#load("mymap4.RData")
+#load("mymap6.RData") #too white - small biases don't show up well 
 source(paste0(dir_code, "/GoogleMaps_support_met.R"))
 setwd(paste0(dir_figures))#, "bubble_plots/"))
+
+#only using the MB one... so 
+stat_list <- "MB"
+
 #hourly values:
 for (k in 1:length(species_list_2)){
 stats <- modStats(met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
@@ -381,20 +381,23 @@ for (m in 1:length(stat_list)) {
 #  png(filename = paste(species_list[k], stat_list[m],"map_v4.png", sep = '_'), width = 10 * resolution, height = 12 *resolution, res = resolution)
 #  print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
 #  dev.off()
-}
+#}
 
-}
+#}
 
 #to try for Khalia
-a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  maptype = "roadmap", map.cols = "greyscale",
+a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  #maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
-                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
-png(filename = paste(species_list[k], stat_list[m],"horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+                     key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
+png(filename = paste(species_list[k], stat_list[m],"new_colour_horizontal_map_revised.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
+}
+}
 
-#daily values: 
-#met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))
+
+#daily values: NOT NEEDED FOR MB - will be the same!
+met_daily <- data.frame(timeAverage(met, avg.time = "1 day", type = c("site","data_source", "campaign")))
 
 for (k in 1:length(species_list_2)){
   stats <- modStats(met_daily, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
@@ -402,15 +405,22 @@ for (k in 1:length(species_list_2)){
   stats <- merge(stats, site_info, by = "site")
   
   for (m in 1:length(stat_list)) {
-    a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
-                         maptype = "roadmap", col = "jet", cex = 1, main = y.lab1[k],
-                         key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
-    png(filename = paste("daily_",species_list[k], stat_list[m],"map.png", sep = '_'), width = 10 * resolution, height = 12 * resolution, res = resolution)
-    print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
-    dev.off()
+#    a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+#                         maptype = "roadmap", col = "jet", cex = 1, main = y.lab1[k],
+#                         key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+#    png(filename = paste("daily_",species_list[k], stat_list[m],"map.png", sep = '_'), width = 10 * resolution, height = 12 * resolution, res = resolution)
+#    print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+#    dev.off()
+    a3 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m], # maptype = "roadmap", map.cols = "greyscale",
+                         col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
+                         key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
+    png(filename = paste("daily",species_list[k], stat_list[m],"new_colour_horizontal_map_revised.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+    print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+    dev.off()    
+    
   }
   
-} #forgot to make the dots bigger... 
+}  
 
 
 
@@ -440,24 +450,55 @@ names(Data2)[18] <- "model"
 
 #make the plots
 
-  
-  species_col <- match("ws", names(Data2))
+for (i in c(1,3)) {  
+  species_col <- match(species[i], names(Data2))
   d <- qq(data_type~Data2[,species_col]|model*campaign, data=Data2,
           as.table = T, col = rep(myColours2,3), cex = 0.8,
           aspect = 1, main = "", scales = list(alternating =1), par.settings = my.settings,# between = list(y =0.25, x = 0.25),
           panel=function(x, col=col,...){
             panel.qq(x,col=col[packet.number()],...) #gets color for each panel
           }
-  )
+          )
   
   
   
-  png(filename = paste0(species_list_2[3], "_quantile_plot_newMET.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
+  png(filename = paste0(species_list_2[i], "_quantile_plot_revised.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
   useOuterStrips(d)
   dev.off()
+}
 
 
-
+#make bw plots of stats (by site)
+source(paste0(dir_code,"/makeStats_functions.R"))
+library(reshape2)
+#calculate stats by site, but not by campaign? or both? 
+#fig_index <- c("b1", "b2", "b3", "b4","b5") 
+stat_stack <- list() 
+   #one plot for each species in species_list_2, MB, cRMS and r (stat_list_2)  
+  for (k in 1:length(species_list_2)){   
+    stats <- makeStats3(met, species_list_2[k])
+    stats$species <- species_list_2[k]
+    stat_stack[[k]] <- stats
+  }
+ stats <- do.call(rbind, stat_stack)
+   # write.csv(stats, file = paste0(dir_stat_output, stats_name, "_per_campaign_per_site.csv"), row.names =F)
+    sub_stats <- subset(stats, select = c("site", "data_source", "campaign", "species", "MB","r", "cRMS"))
+    names(sub_stats)[c(6,7)] <- c("R", "CRMSE")
+    sub_stats <- melt(sub_stats, id = c("site", "campaign", "data_source", "species"))
+    sub_stats$species <- ordered(sub_stats$species, levels = c("temp", "W", "ws", "u10", "v10"))
+    b <- bwplot(value ~data_source|variable*species, data = sub_stats, scales = list(y = list(relation = "free",rot = c(0,90) ), x = list(rot = c(45,0))),between = list(y = 0.5),# layout = c(3,1),
+          ylab = "",as.table = T, #strip = strip.custom(factor.levels= c("MB", "R", "CRMSE")),#strip = strip.custom(factor.levels = rep(species_names[k],3))# main = species_names[k], aspect =1,
+          par.settings = list(box.umbrella=list(col= "black"), 
+                               box.dot=list(col= "black"), 
+                               plot.symbol   = list(col = "black"),
+                               box.rectangle = list( col = myColours2)))
+    
+ 
+    
+          
+png(filename = "stat_bw_plots_revised.png", width = 8 * resolution, height = 6 *resolution, res = resolution )
+useOuterStrips(b)
+dev.off()  
 
 #map of u10 at 3 pm 
 library(dplyr)
@@ -472,13 +513,156 @@ png(filename = paste("u10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 *
 print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 
-a4 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "v10",  maptype = "roadmap", map.cols = "greyscale",
+
+a4 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "v10",  #maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "v10", 0), 
                      key.footer = "v10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
 png(filename = paste("v10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a4$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 
+a5 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "ws",  #maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "v10", 0), 
+                     key.footer = "ws at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+#png(filename = paste("ws_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a4$plot, strip = mystrip, strip.left = mystrip))
+
+
+#maps of wd/u10/v10 at various times of day  
+library(dplyr)
+tms <- c(6,9,12,15,18,21)
+for (i in 1:length(tms)){
+tpm <- selectByDate(met_ln, hour = tms[i])
+means_tpm <- ddply(tpm, .(data_source, campaign, site), numcolwise(mean), na.rm = TRUE) 
+means_tpm <- merge(means_tpm, site_info, by = "site")
+means_tpm$data_source <- ordered(means_tpm$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+a3 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "wd",  #maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "wd", 180), 
+                     key.footer = "wd", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
+png(filename = paste(tms[i],"wd","horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+dev.off()
+}
+
+#I think it would be better to see the progression on one pane - so all hours, all models, but one campaign at a time 
+stms <- selectByDate(met_ln, hour = tms)
+stms$hour <- format(as.POSIXct(stms$date,format="%%Y-%m-%d H:%M:%S"),"%H")
+means_stms <- ddply(stms, .(data_source, campaign, site, hour), numcolwise(mean), na.rm = TRUE) 
+#this is wrong for wd! + all campaigns look the same?
+means_stms<- merge(means_stms, site_info, by = "site")
+means_stms$data_source <- ordered(means_stms$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+means_stms <- within(means_stms, wd <- atan2(-u10, -v10) * 180 / pi)
+## correct for negative wind directions
+ids = which(means_stms$wd < 0) # ids where wd < 0
+means_stms$wd[ids] = means_stms$wd[ids] + 360
+#maybe select campaign first, then make averages? 
+for (i in 1:length(campaign)){
+sub <- subset(means_stms, campaign == "SPS1")#why is this broken - it only selects MUMBA
+  a3 <- GoogleMapsPlot(sub, latitude = "site_lat", longitude = "site_lon", pollutant = "u10", # maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = campaign[i],  key = BubbleKey(means_stms, "u10", 0), as.table = T,
+                     key.footer = "u10", xlab = "Longitude", ylab = "Latitude", type = c("hour","data_source"), map = mymap3)
+png(filename = paste("wind progression", campaign[i],"u10","horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+dev.off()
+}
+
+daily_max_met <- data.frame(timeAverage(met, avg.time = "1 day",  statistic = "max", type = c("data_source", "site","campaign"))  )
+daily_max_met_ln <- data.frame(timeAverage(met_ln, avg.time = "1 day",  statistic = "max", type = c("data_source", "site","campaign")) )        
+#this has all sites - not ideal for plotting
+
+#plot daily max timeseries 
+setwd(paste0(dir_figures))
+
+species <- c("temp", "W", "ws", "u10", "v10")
+y.lab1 <- c(expression("max temperature ("* degree * "C)"), expression(" max water (g kg"^-1*")"), expression(" max wind speed (m s"^-1*")"), expression("max u10 (m s"^-1*")"), expression("max v10 (m s"^-1*")"))
+y.lab3 <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g kg"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
+
+fig_name <- c("surface_temperature_panel", "surface_water_content_panel", "surface_wind_speed_panel", "surface_u10_panel", "surface_v10_panel")
+species_col1 <- match(species, names(daily_max_met_ln))
+
+for (i in 1:length(species)) {
+  
+  t1 <- xyplot(daily_max_met_ln[, species_col1[i]] ~date|campaign, groups = ordered(daily_max_met_ln$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), data = daily_max_met_ln, 
+               scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey, ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
+  t2 <- TaylorDiagram(daily_max_met, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours2, key = F,
+                      annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+  
+  
+  ###binned quantiles 
+  
+  species_col <- match(paste0(species[i], ".obs"), names(met))
+  bins <- c(0,1,5,10,25,50,75,90,95,99,100)/100
+  bin_labels <- c("Q1", "Q5", "Q10","Q10-Q25", "Q25-Q50", "Q50-Q75", "Q75-Q90", "Q90", "Q95", "Q99") 
+  
+  x_test <- quantile(daily_max_met[,species_col], probs = bins, na.rm = T)
+  unik <- !duplicated(x_test, fromLast = T)  ## logical vector of unique values
+  x_test <- x_test[unik] ## the values 
+  bin_labels <- bin_labels[unik]
+  
+  daily_max_met$bin <- cut(daily_max_met[,species_col], breaks = x_test, include.lowest = T)#, labels = bin_labels)
+  stats_bin <- modStats(daily_max_met, obs = paste0(species[i], ".obs"), mod = paste0(species[i], ".mod"), type = c("data_source", "campaign" ,"bin"))
+  
+  #plot:  
+  
+  t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = ordered(stats_bin$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")),
+               xlab = "Quantiles of observed values" ,#species_names[1], 
+               type = "l", 
+               ylab = y.lab3[i],
+               auto.key = F, #list(column = 4, space = "bottom", lines = T, points = F), 
+               #key = myKey,
+               par.settings = my.settings,
+               scales = list(alternating = 1, x = list(rot = c(40,0), cex = 0.6, labels = bin_labels)),
+               layout = c(3,1),
+               aspect = 1,
+               panel =function(...){  
+                 panel.xyplot(...);
+                 panel.abline(h = c(0,add_line[i],-(add_line[i])), col = c("black","grey60", "grey60"), lty = c(2,3,3))
+               })
+  
+  
+  png(filename = paste0("daily_max_",fig_name[i], "v0_newMET.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+  
+  print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
+  print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+  print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
+  
+  dev.off() 
+} 
+
+for (k in 1:length(species_list_2)){
+  stats <- modStats(daily_max_met, obs = paste0(species_list_2[k],".obs"), mod = paste0(species_list_2[k],".mod"), type = c("site","data_source", "campaign"))
+  # merge stats with site info... (lost when applying modStats)
+  stats <- merge(stats, site_info, by = "site")
+  
+  for (m in 1:length(stat_list)) {
+    #    a1 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],
+    #                         maptype = "roadmap", col = "jet", cex = 1, main = y.lab1[k],
+    #                         key.footer = stat_list[m], xlab = "lon", ylab = "lat", type = c( "campaign", "data_source"))
+    #    png(filename = paste("daily_",species_list[k], stat_list[m],"map.png", sep = '_'), width = 10 * resolution, height = 12 * resolution, res = resolution)
+    #    print(useOuterStrips(a1$plot, strip = mystrip, strip.left = mystrip))
+    #    dev.off()
+    a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  map.cols = "Greens",#plot.transparent = T,
+                         col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
+                         key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3) #, alpha = 0.5) this makes the DOTS transparent 
+    png(filename = paste("daily_max",species_list[k], stat_list[m],"horizontal_map2.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+    print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
+    dev.off()    
+    
+  }
+  
+} 
+
+#try plotting timeseries of mean bias 
+
+met$temp.bias <- met$temp.mod - met$temp.obs
+
+t1 <- xyplot(temp.bias ~date|campaign, groups = ordered(met$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), data = met, 
+             scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey)# #ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
+
+daily_max_met$temp.bias <- daily_max_met$temp.mod - daily_max_met$temp.obs
+t1 <- xyplot(temp.bias ~date|campaign+site, groups = ordered(daily_max_met$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), data = daily_max_met, 
+             scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey)# #ylab = y.lab1[i], layout =c(3,1), aspect =1, between = list(x = 1) )
+print(useOuterStrips(t1, strip = mystrip, strip.left = mystrip))
 
 ###################
 #would plotting the mean bias be clearer? 
@@ -491,3 +675,4 @@ a3 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollu
                      col = colBubble, cex = 1.5, main = "",  key = BubbleKey(stats, "MB", 0), 
                      key.footer = "MB in u10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
 print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+

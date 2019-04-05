@@ -21,6 +21,8 @@ makeStats1 <- function(df, species) {
   names(stats) <- gsub(paste0(species,".mod"), "sd.mod", names(stats))
   #calc cRMS
   stats <-within(stats, cRMS <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r))
+  #calc normalised cRMS (divided by sd)
+  stats <-within(stats, cRMS_norm <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r)/sd.obs)
   
   #remove missing values 
   #stats <- na.omit(stats)
@@ -52,6 +54,8 @@ makeStats2 <- function(df, species) {
   names(stats) <- gsub(paste0(species,".mod"), "sd.mod", names(stats))
   #calc cRMS
   stats <-within(stats, cRMS <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r))
+  #calc normalised cRMS (divided by sd)
+  stats <-within(stats, cRMS_norm <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r)/sd.obs)
   
   #remove missing values 
   #stats <- na.omit(stats)
@@ -85,6 +89,8 @@ makeStats3 <- function(df, species) {
   names(stats) <- gsub(paste0(species,".mod"), "sd.mod", names(stats))
   #calc cRMS
   stats <-within(stats, cRMS <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r))#remove missing values 
+  #calc normalised cRMS (divided by sd)
+  stats <-within(stats, cRMS_norm <- sqrt(sd.obs^2 + sd.mod^2 - 2*sd.obs*sd.mod*r)/sd.obs)
   
   #stats <- na.omit(stats)
   

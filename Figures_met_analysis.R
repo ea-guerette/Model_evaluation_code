@@ -12,8 +12,8 @@ dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
 #dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-07-20/"
-dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats"
-dir_figures <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats/visual"
+dir_stat_output <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/newMET/new_stats/" #to include cRMS_norm for Khalia 
+dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/newMET/new_stats/visual"
 
 #load in met observations from BOM  
 load(paste0(dir_obs,"/BOM_data_final.RData")) #will probably need to recalc q 

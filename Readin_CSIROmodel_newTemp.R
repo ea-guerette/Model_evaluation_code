@@ -5,7 +5,7 @@ library(openair)
 library(plyr)
 
 #assign variables 
-campaign <- c("SPS1", "SPS2",  "MUMBA")
+campaign <- c("SPS1", "SPS2",  "MUMBA") #had to modify SPS2 Richmond file so it matched the others
 folders <- c("SPS1_2011", "SPS2_2012", "MUMBA_2013")
 #start_date <- c("2011-02-06 14:00 UTC", "2012-04-15 14:00 UTC", "2012-12-31 14:00 UTC") 
 #end_date <- c("2011-03-06 13:00 UTC", "2012-05-13 13:00 UTC" ,"2013-02-15 13:00 UTC") 

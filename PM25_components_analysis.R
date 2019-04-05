@@ -149,7 +149,7 @@ pmc_ln <- rbind.fill(filterdata, pm_mod)
 
 
 
-a <-   bwplot(SO4 ~ data_source| campaign + TOD, data = pmc_ln,
+a <-   bwplot(EC ~ data_source| campaign + TOD, data = pmc_ln,
        par.settings = list(box.umbrella=list(col= "black"), 
        box.dot=list(col= "black"), 
        plot.symbol   = list(col = "black"),
