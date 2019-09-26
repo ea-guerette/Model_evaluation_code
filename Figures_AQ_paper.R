@@ -33,7 +33,7 @@ OBS <- oeh_obs
 site_list <- levels(as.factor(OBS$site)) #to select only OEH sites 
 site_list <- site_list[-c(9,17:18)] #remove Macarthur (SPS1 only), Warrawong and Westmead (SPS1 and 2 only)
 
-species_list_aq <- species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp","HCHO")
+species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp","HCHO")
 
 param_list <- c("date", "site", "campaign", "data_source", species_list_aq)  #complete list of things to keep from model runs 
 #campaign <- c("MUMBA","SPS1", "SPS2")
@@ -49,13 +49,13 @@ stat_list <- c("r", "RMSE", "MB", "FAC2") #list of stats for plotting
 model_aq <- subset(aq_models, site %in% site_list)
 
 #cut to length - some model runs were longer than the actual campaigns 
-mumba_mod <- subset(model_aq, campaign %in% "MUMBA")
-mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
-sps1_mod <- subset(model_aq, campaign %in% "SPS1")
-sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
-sps2_mod <- subset(model_aq, campaign %in% "SPS2")
-sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
-model_aq <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
+#mumba_mod <- subset(model_aq, campaign %in% "MUMBA")
+#mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
+#sps1_mod <- subset(model_aq, campaign %in% "SPS1")
+#sps1_mod <- subset(sps1_mod, date >= "2011-02-06 14:00 UTC" & date <= "2011-03-06 13:00 UTC")
+#sps2_mod <- subset(model_aq, campaign %in% "SPS2")
+#sps2_mod <- subset(sps2_mod, date >= "2012-04-15 14:00 UTC" & date <= "2012-05-13 13:00 UTC")
+#model_aq <-rbind.data.frame(mumba_mod, sps1_mod,sps2_mod) 
 
 #select variables that are of interest only 
 #indices <- match(species_list, names(model_met)) #not for here - for later 
@@ -72,9 +72,9 @@ melted <- merge(melted_OBS, melted_model_aq, by = c("date", "site", "campaign", 
 
 #for plotting 
 source(paste0(dir_code,"/lattice_plot_settings_aq.R"))
-source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+#source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 myKey <- list(column = 4, space = "top", text = list(c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours))
-
+#may have to fix this 
 
 setwd(dir_figures)
 png(filename = "Taylor_all_new.png", width = 8 * 300, height = 12 * 300, res = 300)
@@ -150,9 +150,11 @@ for (i in 1:5){
   )
   #taylor diagram 
   
-  t2 <- mod_TaylorDiagram(aq, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours_aq, key = F,
-                          annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
-  
+  #t2 <- mod_TaylorDiagram(aq, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours_aq, key = F,
+  #                        annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+  t2 <-TaylorDiagram(aq, obs = paste0(species[i], ".obs"),mod = paste0(species[i], ".mod"), group = "data_source", type = "campaign", col = myColours_aq, key = F,
+                                                  annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
+                          
   ###binned quantiles 
   
   species_col <- match(paste0(species[i], ".obs"), names(aq))
@@ -186,10 +188,10 @@ for (i in 1:5){
   
   
   setwd(dir_figures_paper)
-  png(filename = paste0(fig_name[i], "_v3.png"), width = 7 * 300, height = 9 * 300, res = 300)
+  png(filename = paste0(fig_name[i], "_new.png"), width = 7 * 300, height = 9 * 300, res = 300)
   
   print(t1, position = c(0,2/3-1/24.5,1,1), more = TRUE)
-  print(t2, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE)
+  print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE)
   print(t3, position = c(0,0,1,1/3+1/65))
   
   dev.off() 

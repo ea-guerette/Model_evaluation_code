@@ -1,4 +1,5 @@
 #calculate pblh from YZ's vertical profiles 
+library(ncdf4)
 
 #for YZ (no Td, get e from RH)
 theta_v_from_RH <- function(RH, pres, temp) {
@@ -20,11 +21,17 @@ RI <- function(thetav_z, thetav_s, z, z_s, u_z, u_s, v_z, v_s){
 
 
 #read in vertical profile files 
-setwd("C:/Users/eag873/ownCloud/vertical_profiles/YZ/")
+setwd("C:/Users/eag873/ownCloud_uow/vertical_profiles/YZ/")
 
+#period <- c("MUMBA", "SPS2", "SPS1")
+#period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+#period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+
+Sys.setenv(TZ = "UTC")
 period <- c("MUMBA", "SPS2", "SPS1")
-period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
-period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+period_start <-c("2012-12-31 14:00:00", "2012-04-15 14:00:00", "2011-02-06 14:00:00")
+period_end <- c("2013-02-15 13:00:00", "2012-05-13 13:00:00","2011-03-06:00 13:00")
+
 
 start.date <- c("2012-12-19", "2012-04-09","2011-01-30")
 len <- c(1465, 889, 913)
@@ -87,8 +94,8 @@ for (j in 1:length(period)) {
   
 yz_pblh <- rbind(ROMS_pblh_MUMBA, ROMS_pblh_SPS1, ROMS_pblh_SPS2, WRFCHEM_pblh_MUMBA, WRFCHEM_pblh_SPS1, WRFCHEM_pblh_SPS2)
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison/Model output")
-save(yz_pblh, ROMS_pblh_MUMBA, ROMS_pblh_SPS1, ROMS_pblh_SPS2, WRFCHEM_pblh_MUMBA, WRFCHEM_pblh_SPS1, WRFCHEM_pblh_SPS2, file = "yz_pblh.RData")
+save(yz_pblh, ROMS_pblh_MUMBA, ROMS_pblh_SPS1, ROMS_pblh_SPS2, WRFCHEM_pblh_MUMBA, WRFCHEM_pblh_SPS1, WRFCHEM_pblh_SPS2, file = "yz_pblh_v2.RData")
 
 
-
+library(openair)
 timeVariation(yz_pblh, pollutant = "pblh", type = "campaign", group = "data_source", local.tz = "Etc/GMT-10")

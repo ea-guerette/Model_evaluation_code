@@ -12,11 +12,11 @@ dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
 #dir_stat_output <- "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/stats - 2018-07-20/"
-dir_stat_output <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/newMET/new_stats/" #to include cRMS_norm for Khalia 
-dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/newMET/new_stats/visual"
+dir_stat_output <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/FINAL_stats/" #to include cRMS_norm for Khalia 
+dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/FINAL_stats/"
 
 #load in met observations from BOM  
-load(paste0(dir_obs,"/BOM_data_final.RData")) #will probably need to recalc q 
+load(paste0(dir_obs,"/BOM_data_final.RData")) 
 
 #load in model data
 load(paste0(dir_mod,"/models.RData"))
@@ -85,11 +85,11 @@ melted_BOM <- melt(BOM, id = c("date", "site", "campaign"), value.name = "obs")
 melted_model_met <- melt(model_met, id = c("date", "site", "campaign", "data_source"), value.name = "mod")
 melted <- merge(melted_BOM, melted_model_met, by = c("date", "site", "campaign", "variable"))
 
-source(paste0(dir_code, "/mod_TaylorDiagram.R"))
+#source(paste0(dir_code, "/mod_TaylorDiagram.R"))
 
 setwd(dir_figures)
 png(filename = "Taylor_all.png", width = 8 * 300, height = 12 * 300, res = 300)
-mod_TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = "obs", mod = "mod", normalise = T, 
+TaylorDiagram(subset(melted, variable != "prcp" & variable != "wd" ), obs = "obs", mod = "mod", normalise = T, 
               group = "variable", type = c("campaign", "data_source"), cex = 0.95, 
               annotate = "", rms.col = "grey40")
 dev.off()
@@ -106,11 +106,11 @@ source(paste0(dir_code,"/lattice_plot_settings.R"))
 for (k in 1:length(species_list_2)){   
   stats_name <- paste0("stats_",species_list[k])
   stats <- makeStats1(met, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_dom_avg.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output,"final_", stats_name, "_dom_avg.csv"), row.names =F)
   stats <- makeStats2(met, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output, "final_",stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
   stats <- makeStats3(met, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, stats_name, "_per_campaign_per_site.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output, "final_",stats_name, "_per_campaign_per_site.csv"), row.names =F)
   }   
 
 met_daily <- timeAverage(met, avg.time = "1 day", type = c("site", "campaign", "data_source"))
@@ -119,11 +119,11 @@ met_weekly <- timeAverage(met, avg.time = "7 day", type = c("site", "campaign", 
 for (k in 1:length(species_list_2)){   
   stats_name <- paste0("stats_",species_list[k])
   stats <- makeStats1(met_daily, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, "daily_", stats_name, "_dom_avg.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output, "final_daily_", stats_name, "_dom_avg.csv"), row.names =F)
   stats <- makeStats2(met_daily, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, "daily_",stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output, "final_daily_",stats_name, "_dom_avg_per_campaign.csv"), row.names =F)
   stats <- makeStats3(met_daily, species_list_2[k])
-  write.csv(stats, file = paste0(dir_stat_output, "daily_" ,stats_name, "_per_campaign_per_site.csv"), row.names =F)
+  write.csv(stats, file = paste0(dir_stat_output, "final_daily_" ,stats_name, "_per_campaign_per_site.csv"), row.names =F)
 }  
 
 #########
@@ -133,7 +133,7 @@ for (k in 1:length(species_list_2)){
 #make summary plots for the stats  
 require(latticeExtra)
 #setwd(paste0(dir_figures, "/visual_stats/"))
-setwd(paste0(dir_figures))#, "/visual_stats/"))
+setwd(paste0(dir_figures, "/visual_stats/"))
 #species_col <- match(stat_list, names(stats2))
 
 for (k in 1:length(species_list_2)){  
@@ -361,12 +361,15 @@ for (i in 1:length(species_list)) {
 }
 
 #the above shows all models, averaged across all sites, separately for each campaign 
-#need the same plots, for each site... 
+#need the same plots, for each site...
+
+paste0(dir_figures,"/site_plots/")
+met_ln$data_source <- ordered(met_ln$data_source, levels = c("C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS"))
 for (k in 1:length(site_list)) {
 for (i in 1:length(species_list)) {
     d <- timeVariation(subset(met_ln, site %in% site_list[k]), pollutant = species_list[i], group = "data_source", type = "campaign", ci = F, 
                        ylab = species_names[i], key.columns = 3, main = site_list[k], col = myColours, lty = mylineTypes, lwd = mylineWidths)
-  setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/")
+ # setwd("C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/site plots/")
   png(filename = paste(species_list[i],site_list[k],"diurnal.png", sep = '_'), width = 6 * 300, height = 4 * 300, res = 300)
   trellis.par.set(my.settings)
   print(d, subset = "hour")

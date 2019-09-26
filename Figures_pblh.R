@@ -7,26 +7,26 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #dir_stat_output <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Stats/met_analysis/"
-dir_stat_output <-  "C:/Users/eag873/ownCloud/Figures_and_stats_met_paper/newMET/stats"
+dir_stat_output <-  "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/REVISED_stats"
 #dir_figures <- "C:/Users/eag873/Documents/GitHub/Model_evaluation/Figures/met_analysis/"
-dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/newMET"
+dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/REVISED"
 
 #load obs 
 load(paste0(dir_obs,"/BOM_pblh.RData"))
 
 #load models 
-load(paste0(dir_mod,"cmaq_pblh.RData"))
-load(paste0(dir_mod,"ansto_pblh.RData"))
-load(paste0(dir_mod,"csiro_pblh.RData"))
-load(paste0(dir_mod,"yz_pblh.RData"))
-load(paste0(dir_mod,"oeh_pblh.RData"))
-load(paste0(dir_mod,"wrf_chem_pblh.RData"))
+load(paste0(dir_mod,"cmaq_pblh_v2.RData"))
+load(paste0(dir_mod,"ansto_pblh_v2.RData"))
+load(paste0(dir_mod,"csiro_pblh_v2.RData"))
+load(paste0(dir_mod,"yz_pblh_v2.RData"))
+load(paste0(dir_mod,"oeh_pblh_revised.RData"))
+load(paste0(dir_mod,"wrf_chem_pblh_v2.RData"))
 #merge models 
 
 mod_pblh <- rbind(cmaq_pblh, csiro_pblh, ansto_pblh, yz_pblh, oeh_pblh, wrf_chem_pblh)
 #timeVariation(mod_pblh, pollutant = "pblh", type = "campaign", group = 'data_source', ci = F, local.tz = "Etc/GMT-10")
 #scatterPlot(subset(mod_pblh, campaign %in% "MUMBA"), x = "date", y = "pblh", group = "data_source", plot.type = "l" )
-#scatterPlot(selectByDate(mod_pblh, start = "17/01/2013", end = "19/01/2013"), x = "date", y = "pblh", group = "data_source", plot.type = "l", cols = myColours2 )
+#scatterPlot(selectByDate(mod_pblh, start = "07/01/2013", end = "09/01/2013"), x = "date", y = "pblh", group = "data_source", plot.type = "l")#, cols = myColours2 )
 
 ##############
 #weird spikes at 4 and 22? in OEH model 
@@ -118,7 +118,7 @@ pblh <- merge(pblh_obs, pblh_mod, by = c("date", "campaign", "TOD"), suffixes = 
 
 setwd(dir_figures)
 #png(filename = "Taylor_pblh_all_models_v2.png", width = 12 * 600, height = 8 * 600, res = 600)
-png(filename = "Taylor_pblh_all_models_not_normalised.png", width = 10 * 600, height = 8 * 600, res = 600)
+png(filename = "Taylor_pblh_all_models_not_normalised_revised.png", width = 10 * 600, height = 8 * 600, res = 600)
 TaylorDiagram(pblh,  obs = "pblh.obs", mod = "pblh.mod", normalise =F, 
                   group = "data_source", type = c("campaign", "TOD"), cex = 2,#cex = 1.25, 
                   annotate = "", rms.col = "grey40", cols = myColours2, key.pos = "bottom", key.columns = 4, key.title = " models ")
@@ -178,19 +178,20 @@ makeStats_pblh2 <- function(df, species) {
 stats_pblh <- makeStats_pblh2(pblh, "pblh")
 
 setwd(dir_stat_output)
-write.csv(stats_pblh_TOD, file = "stats_pblh_TOD_all_models.csv", row.names = F)
-write.csv(stats_pblh, file = "stats_pblh_all_models.csv", row.names = F)
+write.csv(stats_pblh_TOD, file = "revised_stats_pblh_TOD_all_models.csv", row.names = F)
+write.csv(stats_pblh, file = "revised_stats_pblh_all_models.csv", row.names = F)
 
 #remake the same, but using the original model PBL heights 
-load(paste0(dir_mod,"/ANSTO_model_output_new.RData"))
-load(paste0(dir_mod,"/CMAQ_model_output_new.RData"))
-load(paste0(dir_mod,"/WRFCHEM_model_output_new.RData"))
-load(paste0(dir_mod,"/CSIRO_model_output_new_new_fixed.RData"))
-load(paste0(dir_mod,"/OEH_model_output2.RData"))
-load(paste0(dir_mod, "/YZ.RData"))
+load(paste0(dir_mod,"/ANSTO_model_output_final.RData"))
+load(paste0(dir_mod,"/CMAQ_model_output_final.RData"))
+load(paste0(dir_mod,"/WRFCHEM_model_output_final.RData"))
+load(paste0(dir_mod,"/CSIRO_model_output_final.RData"))
+#load(paste0(dir_mod,"/OEH_model_output_final.RData"))
+load(paste0(dir_mod,"/OEH_model_output_newMET_revised.RData")) #temporary - no AQ in this (3 Apr 2019)
+load(paste0(dir_mod, "/YZ_final.RData"))
 
 
-models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model, yz_mod)
+models <- rbind.fill(wrf, cmaq, wrf_chem, csiro, oeh_model_final_met, yz_mod)
 
 mumba_mod <- subset(models, campaign %in% "MUMBA")
 mumba_mod <- subset(mumba_mod, date >= "2012-12-31 14:00 UTC" & date <= "2013-02-15 13:00 UTC")
@@ -289,7 +290,7 @@ useOuterStrips(b1)
 
 
 
-#investigate timseries 
+#investigate timeseries 
 #date_start <- c("01/01/2013","07/02/2011", "16/04/2012") #check those
 #date_end <- c("15/02/2013","06/03/2011","13/05/2012")  #check those
 
@@ -299,7 +300,7 @@ useOuterStrips(b1)
  #           key.position = "top", key.columns =3, key.title = "")
 
 #still have issues with the times, etc  
-pblh_ln <- pblh_ln[order(as.Date(pblh_ln$date, format="%Y/%m/%d %H:%M:%S")),]
+pblh_ln <- pblh_ln[order(as.POSIXct(pblh_ln$date, format="%Y/%m/%d %H:%M:%S")),]
 
 a <- xyplot(pblh ~ date|campaign + TOD, data = pblh_mod, groups = data_source, type = "l",
        xlim = list(c(as.POSIXct("2013-01-01"),as.POSIXct("2013-02-15")), c(as.POSIXct("2011-02-07"),as.POSIXct("2011-03-06")), c(as.POSIXct("2012-04-16"),as.POSIXct("2012-05-13"))),
@@ -329,8 +330,15 @@ dev.off()
 #pblh_ln2$data_source <- factor(pblh_ln2$data_source, levels = c("OBS","C-CTM", "O-CTM", "W-A11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
 #pblh_ln2 <- pblh_ln2[order(as.Date(pblh_ln$date, format="%Y/%m/%d %H:%M:%S")),]
 
+#issues with time order in mod_pblh - only CSIRO, not in original CSIRO timeseries... 
+mod_pblh <- mod_pblh[order(as.POSIXct(mod_pblh$date, format="%Y-%m-%d %H:%M:%S UTC")),]
+#try to make it in standard local time...
+#Sys.setenv(TZ = "Etc/GMT-10") #did not work
+library(lubridate)
+mod_pblh$date <-  with_tz(mod_pblh$date, tzone = "Etc/GMT-10")
+
 c <- xyplot(pblh ~ date|campaign, data = mod_pblh, groups = data_source, type = "l",
-            xlim = list(c(as.POSIXct("2013-01-01"),as.POSIXct("2013-02-15")), c(as.POSIXct("2011-02-07"),as.POSIXct("2011-03-06")), c(as.POSIXct("2012-04-16"),as.POSIXct("2012-05-13"))),
+           # xlim = list(c(as.POSIXct("2013-01-01"),as.POSIXct("2013-02-15")), c(as.POSIXct("2011-02-07"),as.POSIXct("2011-03-06")), c(as.POSIXct("2012-04-16"),as.POSIXct("2012-05-13"))),
             #ylim = list(c(0,4500)),
             scales = list(x = list(relation = "free", alternating =1), y = list(relation = "free", rot = c(0,90))), 
             #  ylim = c(c(0,4500),c(0,4500),c(0,4500),c(0,2000),c(0,2000),c(0,2000)),

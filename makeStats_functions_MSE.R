@@ -4,6 +4,8 @@
 #makeStats2 : stats per model per campaign
 #makeStats3 : stats per model per campaign per site 
 
+library(plyr)
+
 #makeStats1
 #function to calculate stats by data_source only 
 makeStats1 <- function(df, species) {

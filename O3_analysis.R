@@ -43,6 +43,8 @@ id <- which(OBS$NOx < 0)
 OBS$NOx[id] <- 0 #>1300 values, increases mean by 0.05 ppb 
 id <- which(OBS$NO2 < 0) #>1400  values 
 OBS$NO2[id] <- 0  #increases mean by 0.053 ppb 
+id <- which(OBS$NO < 0) #>6350  values 
+OBS$NO[id] <- 0  
 #NO, NO2, CO, PM2.5 all have negative values, but this analysis only needs NOx, O3 (maybe NO2?)
 
 species_list_aq <- c("O3","NO", "NO2","NOx", "PM2.5","PM10","CO", "SO2", "NH4", "NO3", "SO4", "EC", "ws", "temp", "HCHO", "C5H8")
@@ -102,19 +104,19 @@ source(paste0(dir_code, "/GoogleMaps_support.R"))
 myKey_aq <- list(column = 4, space = "top", text = list(c("C-CTM", "O-CTM", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), lines = list(lty =mylineTypes, col = myColours_aq))
 resolution = 600
 
-#panel plot - O3, NOx only - 
+#panel plot - O3, NOx only - add NO2
 #diurnal cycles, taylorDiagrams, binned quantiles on one panel, with only one legend 
-species <- c("O3", "NOx")
-y.lab1 <- c("Ozone (ppb)", "NOx (ppb)")
-y.lab_norm <-c( "Normalised mean bias",  "Normalised mean bias ")
-y.lab3 <- c("Mean bias (ppb)","Mean bias (ppb)")
-fig_name <- c("O3_panel", "NOx_panel")
+species <- c("O3", "NOx", "NO2", "NO")
+y.lab1 <- c("Ozone (ppb)", "NOx (ppb)", "NO2 (ppb)","NO (ppb)")
+y.lab_norm <-c( "Normalised mean bias",  "Normalised mean bias", "Normalised mean bias", "Normalised mean bias")
+y.lab3 <- c("Mean bias (ppb)","Mean bias (ppb)","Mean bias (ppb)","Mean bias (ppb)")
+fig_name <- c("O3_panel", "NOx_panel","NO2_panel", "NO_panel")
 #add_line <- c(5,5) #not sure if 2 is OK for NOx
-add_line <- c(0.15,0.15) #not sure if 15% NMB is reasonable for NOx - looks awful 
+add_line <- c(0.15,0.15, 0.15, 0.15) #not sure if 15% NMB is reasonable for NOx, NO2 - looks awful 
 
 setwd(dir_figures)
 
-for (i in 1:2){
+for (i in 1:4){
   a <- timeVariation(aq_ln, pollutant = species[i], group = "data_source", type = "campaign")
   temp_hour <- a$data$hour
   
@@ -477,7 +479,7 @@ names(Data2)[27] <- "model"
 #make the plots
 
 
-species_col <- match("NOx", names(Data2))
+species_col <- match("O3", names(Data2))
 d <- qq(data_type~Data2[,species_col]|model*campaign, data=Data2,
         as.table = T, col = rep(myColours_2_aq,3),
         aspect = 1, main = "", scales = list(alternating =1), par.settings = my.settings,# between = list(y =0.25, x = 0.25),
@@ -486,7 +488,7 @@ d <- qq(data_type~Data2[,species_col]|model*campaign, data=Data2,
         }
 )
 setwd(dir_figures)
-png(filename = paste0(species[2], "_quantile_plot.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
+png(filename = paste0(species[1], "_quantile_plot.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
 useOuterStrips(d)
 dev.off()
 
@@ -870,7 +872,7 @@ aq_ln4 <- arrange(aq_ln4, date)
 
 t1 <- xyplot(aq_ln4[,species_col1] ~date|campaign, groups = ordered(aq_ln4$data_source, levels = c("C-CTM", "O-CTM", "W-NC1", "W-NC2", "W-UM1", "W-UM2", "OBS")), data = aq_ln4, 
              scales = list(x = list(relation = "free")), par.settings = my.settings, type = "l", key = myKey_aq, ylab = y.lab1[1], layout =c(3,1), aspect =1, between = list(x = 1) )
-t2 <- TaylorDiagram(aq4, obs = paste0(species_list, ".obs"),mod = paste0(species_list, ".mod"), group = "data_source", type = "campaign", col = myColours_aq, key = F,
+t2 <- TaylorDiagram(aq4, obs = paste0(species_list, ".obs"),mod = paste0(species_list, ".mod"), group = "data_source", type = "campaign", col = myColours_2_aq, key = F,
                     annotate = "", rms.col = "gray60", normalise = T, layout = c(3,1), cex = 1.6)
 
 

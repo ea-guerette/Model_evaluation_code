@@ -27,7 +27,7 @@ aq_models <- subset(models, data_source != "W-A11")
 
 modsps1 <- subset(aq_models, campaign %in% "SPS1")
 #modsps1 <- subset(modsps1, site %in% "Westmead") #select site early on or not? if not, then can use other sites to see how variable things are 
-sps1am <-  selectByDate(modsps1, hour = 18:22)
+sps1am <-  selectByDate(modsps1, hour = 18:22) #make sure those times are correct! 
 sps1am <-  timeAverage(sps1am, avg.time = "day", type = c("campaign", "data_source", "site")) 
 sps1am$date <- as.POSIXct(paste(sps1am$date, "18:00"), tz = "UTC")
 sps1am$TOD <- "AM"
@@ -80,7 +80,7 @@ mumba_MUMBA <- subset(mumba, site %in% "MUMBA")
 pm_models <- rbind.fill(sps1,sps2,mumba)
 setwd(dir_mod)
 save(pm_models, file = "models_AM_PM.RData") 
-#will need to rerun this with final version of data 
+#will need to rerun this with final version of data - done 21-Aug-2019
 
 pm_mod <- rbind.fill(sps1_westmead, sps2_westmead, mumba_MUMBA)
 

@@ -21,11 +21,17 @@ RI <- function(thetav_z, thetav_s, z, z_s, u_z, u_s, v_z, v_s){
 }
 
 #read in all three vertical profile files 
-setwd("C:/Users/eag873/ownCloud/vertical_profiles/CMAQ")
+setwd("C:/Users/eag873/ownCloud_uow/vertical_profiles/CMAQ")
 
+Sys.setenv(TZ = "UTC")
 period <- c("MUMBA", "SPS2", "SPS1")
-period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
-period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+#period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+#period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+period_start <-c("2012-12-31 14:00:00", "2012-04-15 14:00:00", "2011-02-06 14:00:00")
+period_end <- c("2013-02-15 13:00:00", "2012-05-13 13:00:00","2011-03-06:00 13:00")
+#period <- c("MUMBA", "SPS2", "SPS1")
+#period_start <-c("2013-01-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+#period_end <- c("2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
 
 for (j in 1:length(period)) {
   fname <- paste0("cmaq_profile_met_d04_", period[j], ".nc")
@@ -70,7 +76,7 @@ for (j in 1:length(period)) {
 
 cmaq_pblh <- rbind(cmaq_pblh_SPS1, cmaq_pblh_SPS2, cmaq_pblh_MUMBA) 
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison/Model output")
-save(cmaq_pblh, cmaq_pblh_MUMBA, cmaq_pblh_SPS1, cmaq_pblh_SPS2, file = "cmaq_pblh.RData")
+save(cmaq_pblh, cmaq_pblh_MUMBA, cmaq_pblh_SPS1, cmaq_pblh_SPS2, file = "cmaq_pblh_v2.RData")
 
 ####################
 

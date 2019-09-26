@@ -9,7 +9,7 @@ dir_obs <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercompariso
 dir_mod <- "C:/Documents and Settings/eag873/My Documents/R_Model_Intercomparison/Model output/"
 dir_code <- "C:/Users/eag873/Documents/GitHub/Model_evaluation_code/"
 #save figures on cloudstor 
-dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/REVISED/"
+dir_figures <- "C:/Users/eag873/ownCloud_uow/Figures_and_stats_met_paper/FINAL/"
 
 #load in met observations from BOM 
 load(paste0(dir_obs,"/BOM_data_final.RData"))
@@ -37,7 +37,7 @@ site_list <- site_list[-7] #removing Williamtown - outside of domain? figures v4
 
 species_list <- c("temp", "W", "ws","u10", "v10","wd","RH", "prcp", "pblh", "SWR", "pres") #met variables we are interested in 
 species_list_2 <- c("temp", "W", "ws", "u10", "v10") #reduced list of variables -to plot (order matters, need to match labels in species_names)
-species_names <- c(expression("Temperature (" * degree * "C)"),   expression("water mixing ratio (g kg"^-1 *")"), expression("wind speed (m s"^-1 *")"), expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"), expression("wind direction (" * degree *")"),"RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
+species_names <- c(expression("Temperature (" * degree * "C)"),   expression("water mixing ratio (g/kg)"), expression("wind speed (m s"^-1 *")"), expression("u wind (m s"^-1 *")"), expression("v wind (m s"^-1 *")"), expression("wind direction (" * degree *")"),"RH (%)", "precipitation (mm)", "pblh (m)", "SWR", "pressure (hPa)")
 
 param_list <- c("date", "site", "campaign", "data_source", species_list)  #complete list of things to keep from model runs 
 
@@ -82,7 +82,7 @@ resolution = 600
 #TEMPERATURE, W, WS, u10, v10   
 #diurnal cycles, taylorDiagrams, binned quantiles on one panel, with only one legend 
 species <- c("temp", "W","ws", "u10", "v10")
-y.lab <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g kg"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
+y.lab <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g/kg)"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
 fig_name <- c("surface_temperature_panel", "surface_water_content_panel", "surface_wind_speed_panel", "surface_u10_panel", "surface_v10_panel")
 add_line <- c(1,1,1.5, 1.5,1.5)
 #source(paste0(dir_code, "/mod_TaylorDiagram.R"))
@@ -138,11 +138,20 @@ stats_bin <- modStats(met, obs = paste0(species[i], ".obs"), mod = paste0(specie
  
   
 setwd(dir_figures)
-png(filename = paste0(fig_name[i], "_revised_not_normalised.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
+png(filename = paste0(fig_name[i], "_final_edited.png"), width = 7 * resolution, height = 9 * resolution, res = resolution)
 
   print(t1, position = c(0,2/3-1/28,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
+  trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+  panel.text(0.15, 0.075, "(a)", cex = 1, font = 1)
+  trellis.unfocus()
   print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+  trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+  panel.text(0.15, 0.075, "(b)", cex = 1, font = 1)
+  trellis.unfocus()
   print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
+  trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+  panel.text(0.15, 0.075, "(c)", cex = 1, font = 1)
+  trellis.unfocus()
   
 dev.off() 
 
@@ -243,7 +252,7 @@ xyplot(prcp ~date|campaign, groups = data_source, data = subset(prcp_daily, site
 
 
 setwd(dir_figures)
-png(filename = "Total_prcp_w_MSWEP_by_site_revised.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_by_site_final.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 #trellis.par.set(my.settings) 
 mystrip <- strip.custom(bg ="white")
 b1 <- barchart(total_prcp$prcp~total_prcp$site|total_prcp$campaign, group = total_prcp$data_source,
@@ -263,7 +272,7 @@ trellis.par.set(my.settings)
 sums2 <- ddply(prcp_daily, .(campaign, data_source), numcolwise(sum), na.rm = TRUE)
 total_prcp2 <- subset(sums2, select = c("campaign", "data_source", "prcp"))
 
-png(filename = "Total_prcp_w_MSWEP_revised.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
+png(filename = "Total_prcp_w_MSWEP_final.png", width = 12 * resolution, height = 7 * resolution, res = resolution)#, type = "windows")
 trellis.par.set(my.settings_prcp) 
 mystrip <- strip.custom(bg ="white")
 b2 <- barchart(total_prcp2$prcp~total_prcp2$data_source|total_prcp2$campaign,# group = total_prcp$data_source,
@@ -290,8 +299,8 @@ summary(models$wd, na.rm= T) #why negative wd??
 setwd(paste0(dir_figures))
 
 species <- c("temp", "W","ws", "u10", "v10")
-y.lab1 <- c(expression("Temperature ("* degree * "C)"), expression("water (g kg"^-1*")"), expression("wind speed (m s"^-1*")"), expression("u10 (m s"^-1*")"), expression("v10 (m s"^-1*")"))
-y.lab3 <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g kg"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
+y.lab1 <- c(expression("Temperature ("* degree * "C)"), expression("water (g/kg)"), expression("wind speed (m s"^-1*")"), expression("u10 (m s"^-1*")"), expression("v10 (m s"^-1*")"))
+y.lab3 <- c(expression("Mean bias ("* degree * "C)"), expression("Mean bias (g/kg)"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"), expression("Mean bias (m s"^-1*")"))
 
 fig_name <- c("surface_temperature_panel", "surface_water_content_panel", "surface_wind_speed_panel", "surface_u10_panel", "surface_v10_panel")
 species_col1 <- match(species, names(daily_met_ln))
@@ -336,11 +345,20 @@ t3 <- xyplot(MB ~ bin|campaign, data = stats_bin, groups = ordered(stats_bin$dat
              })
 
 
-png(filename = paste0("daily_",fig_name[i], "not_normalised_revised.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
-
+png(filename = paste0("daily_",fig_name[i], "_final_edited.png"),  width = 7 * resolution, height = 9 * resolution, res = resolution)
+#added "letters" but not tested 
 print(t1, position = c(0,2/3,1,1), more = TRUE) #c(0,2/3-1/24.5,1,1)
+trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+panel.text(0.125, 0.075, "(a)", cex = 1, font = 1)
+trellis.unfocus()
 print(t2$plot, trellis.par.set(my.settings), position = c(0,1/3,1,2/3), more = TRUE) #c(0,1/3,1,2/3)
+trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+panel.text(0.125, 0.075, "(b)", cex = 1, font = 1)
+trellis.unfocus()
 print(t3, position = c(0,0,1,1/3+1/65)) # c(0,0,1,1/3+1/65)
+trellis.focus("toplevel") ## has coordinate system [0,1] x [0,1]
+panel.text(0.125, 0.075, "(c)", cex = 1, font = 1)
+trellis.unfocus()
 
 dev.off() 
 } 
@@ -389,7 +407,7 @@ for (m in 1:length(stat_list)) {
 a2 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m],  #maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
                      key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
-png(filename = paste(species_list[k], stat_list[m],"new_colour_horizontal_map_revised.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+png(filename = paste(species_list[k], stat_list[m],"new_colour_horizontal_map_final.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a2$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 }
@@ -414,7 +432,7 @@ for (k in 1:length(species_list_2)){
     a3 <- GoogleMapsPlot(stats, latitude = "site_lat", longitude = "site_lon", pollutant = stat_list[m], # maptype = "roadmap", map.cols = "greyscale",
                          col = colBubble, cex = 1.5, main = y.lab1[k],  key = BubbleKey(stats, stat_list[m], 0), 
                          key.footer = stat_list[m], xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
-    png(filename = paste("daily",species_list[k], stat_list[m],"new_colour_horizontal_map_revised.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+    png(filename = paste("daily",species_list[k], stat_list[m],"new_colour_horizontal_map_final.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
     print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
     dev.off()    
     
@@ -462,7 +480,7 @@ for (i in c(1,3)) {
   
   
   
-  png(filename = paste0(species_list_2[i], "_quantile_plot_revised.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
+  png(filename = paste0(species_list_2[i], "_quantile_plot_final.png"), width = 10 *resolution, height = 8*resolution, res = resolution)
   useOuterStrips(d)
   dev.off()
 }
@@ -496,19 +514,19 @@ stat_stack <- list()
  
     
           
-png(filename = "stat_bw_plots_revised.png", width = 8 * resolution, height = 6 *resolution, res = resolution )
+png(filename = "stat_bw_plots_final.png", width = 8 * resolution, height = 6 *resolution, res = resolution )
 useOuterStrips(b)
 dev.off()  
 
-#map of u10 at 3 pm 
+#map of u10 at 3 pm - or something
 library(dplyr)
 tpm <- selectByDate(met_ln, hour = 15)
 means_tpm <- ddply(tpm, .(data_source, campaign, site), numcolwise(mean), na.rm = TRUE) 
 means_tpm <- merge(means_tpm, site_info, by = "site")
 means_tpm$data_source <- ordered(means_tpm$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
-a3 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "u10",  maptype = "roadmap", map.cols = "greyscale",
+a3 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "u10",  #maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "u10", 0), 
-                     key.footer = "u10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+                     key.footer = "u10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
 png(filename = paste("u10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
@@ -516,18 +534,30 @@ dev.off()
 
 a4 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "v10",  #maptype = "roadmap", map.cols = "greyscale",
                      col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "v10", 0), 
-                     key.footer = "v10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+                     key.footer = "v10 at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
 png(filename = paste("v10_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a4$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 
 a5 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "ws",  #maptype = "roadmap", map.cols = "greyscale",
-                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "v10", 0), 
-                     key.footer = "ws at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap2)
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "ws", 4), 
+                     key.footer = "ws at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
 #png(filename = paste("ws_3pm","horizontal_map_v1.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
 print(useOuterStrips(a4$plot, strip = mystrip, strip.left = mystrip))
 
+#not bad but wd might be better? recalc so averagins is OK 
+means_tpm <- within(means_tpm, wd <- atan2(-u10, -v10) * 180 / pi)
+## correct for negative wind directions
+ids = which(means_tpm$wd < 0) # ids where wd < 0
+means_tpm$wd[ids] = means_tpm$wd[ids] + 360
 
+a5 <- GoogleMapsPlot(means_tpm, latitude = "site_lat", longitude = "site_lon", pollutant = "wd",  #maptype = "roadmap", map.cols = "greyscale",
+                     col = colBubble, cex = 1.5, main = "",  key = BubbleKey(means_tpm, "wd", 180), 
+                     key.footer = "wd at 3 pm", xlab = "Longitude", ylab = "Latitude", type = c("data_source", "campaign"), map = mymap3)
+#not so easy to pick differences?
+
+
+#progression might be more interesting?
 #maps of wd/u10/v10 at various times of day  
 library(dplyr)
 tms <- c(6,9,12,15,18,21)
@@ -544,27 +574,60 @@ print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
 dev.off()
 }
 
-#I think it would be better to see the progression on one pane - so all hours, all models, but one campaign at a time 
-stms <- selectByDate(met_ln, hour = tms)
-stms$hour <- format(as.POSIXct(stms$date,format="%%Y-%m-%d H:%M:%S"),"%H")
-means_stms <- ddply(stms, .(data_source, campaign, site, hour), numcolwise(mean), na.rm = TRUE) 
-#this is wrong for wd! + all campaigns look the same?
-means_stms<- merge(means_stms, site_info, by = "site")
-means_stms$data_source <- ordered(means_stms$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
-means_stms <- within(means_stms, wd <- atan2(-u10, -v10) * 180 / pi)
-## correct for negative wind directions
-ids = which(means_stms$wd < 0) # ids where wd < 0
-means_stms$wd[ids] = means_stms$wd[ids] + 360
-#maybe select campaign first, then make averages? 
-for (i in 1:length(campaign)){
-sub <- subset(means_stms, campaign == "SPS1")#why is this broken - it only selects MUMBA
-  a3 <- GoogleMapsPlot(sub, latitude = "site_lat", longitude = "site_lon", pollutant = "u10", # maptype = "roadmap", map.cols = "greyscale",
-                     col = colBubble, cex = 1.5, main = campaign[i],  key = BubbleKey(means_stms, "u10", 0), as.table = T,
-                     key.footer = "u10", xlab = "Longitude", ylab = "Latitude", type = c("hour","data_source"), map = mymap3)
-png(filename = paste("wind progression", campaign[i],"u10","horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
-print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
-dev.off()
+#I think it would be better to see the progression on one panel - so all hours, all models, but one campaign at a time 
+for (i in 1:length(campaign)) {
+  sub <- subset(met_ln, campaign == campaign[i])
+  stms <- selectByDate(sub, hour = tms)
+  stms$hour <- format(as.POSIXct(stms$date,format="%%Y-%m-%d H:%M:%S"),"%H")
+  means_stms <- ddply(stms, .(data_source, campaign, site, hour), numcolwise(mean), na.rm = TRUE) 
+  #this is wrong for wd!
+  means_stms <- within(means_stms, wd <- atan2(-u10, -v10) * 180 / pi)
+  ## correct for negative wind directions
+  ids = which(means_stms$wd < 0) # ids where wd < 0
+  means_stms$wd[ids] = means_stms$wd[ids] + 360
+
+  means_stms$data_source <- ordered(means_stms$data_source, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+  means_stms<- merge(means_stms, site_info, by = "site")
+  a3 <- GoogleMapsPlot(means_stms, latitude = "site_lat", longitude = "site_lon", pollutant = "u10", # maptype = "roadmap", map.cols = "greyscale",
+                       col = colBubble, cex = 1.5, main = campaign[i],  key = BubbleKey(means_stms, "u10", 0), as.table = T,
+                       key.footer = "u10", xlab = "Longitude", ylab = "Latitude", type = c("hour","data_source"), map = mymap3)
+  png(filename = paste("wind progression", campaign[i],"u10","horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+  print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+  dev.off()
+  }
+#these still look identical - I don't understand what I'm doing wrong 
+
+#maybe use timeVariation... but this only does one variable at a time - wd?, u10? 
+hours <- c(6,9,12,15,18,21)
+sp <- "u10" #"wd" still don't think wd makes sense 
+#camp <- "MUMBA"
+for (i in 1:length(campaign)) {
+  camp <- campaign[i]
+  sub <- subset(met_ln, campaign == camp) #somehow subset does not work with indices anymore...
+  a <- timeVariation(sub, pollutant = sp, group = "data_source",type = "site") 
+  all_hours <- a$data$hour
+  sel_hours <- subset(all_hours, hour %in% hours)
+  sel_hours <- merge(sel_hours, site_info, by = "site")
+  sel_hours$variable <-  ordered(sel_hours$variable, levels = c("OBS", "C-CTM", "O-CTM", "A-W11", "W-NC1", "W-NC2", "W-UM1", "W-UM2"))
+  a3 <- GoogleMapsPlot(sel_hours, latitude = "site_lat", longitude = "site_lon", pollutant = "Mean", # maptype = "roadmap", map.cols = "greyscale",
+                       col = colBubble, cex = 1.5, main = camp,  key = BubbleKey(sel_hours, "Mean", 0), as.table = T,
+                       key.footer = sp, xlab = "Longitude", ylab = "Latitude", type = c("hour","variable"), map = mymap3)
+  png(filename = paste("wind progression", camp,sp,"horizontal_map_final.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+  print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+  dev.off()
 }
+ 
+
+#maybe select campaign first, then make averages? 
+#for (i in 1:length(campaign)){
+#sub <- subset(means_stms, campaign == "SPS1")#why is this broken - it only selects MUMBA
+#  a3 <- GoogleMapsPlot(sub, latitude = "site_lat", longitude = "site_lon", pollutant = "u10", # maptype = "roadmap", map.cols = "greyscale",
+#                     col = colBubble, cex = 1.5, main = campaign[i],  key = BubbleKey(means_stms, "u10", 0), as.table = T,
+#                     key.footer = "u10", xlab = "Longitude", ylab = "Latitude", type = c("hour","data_source"), map = mymap3)
+#png(filename = paste("wind progression", campaign[i],"u10","horizontal_map.png", sep = '_'), width = 10 * resolution, height = 8 *resolution, res = resolution)
+#print(useOuterStrips(a3$plot, strip = mystrip, strip.left = mystrip))
+#dev.off()
+#}
 
 daily_max_met <- data.frame(timeAverage(met, avg.time = "1 day",  statistic = "max", type = c("data_source", "site","campaign"))  )
 daily_max_met_ln <- data.frame(timeAverage(met_ln, avg.time = "1 day",  statistic = "max", type = c("data_source", "site","campaign")) )        

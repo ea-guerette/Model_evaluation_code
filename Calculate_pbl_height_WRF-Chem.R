@@ -1,5 +1,5 @@
 #calculate pblh from vertical profiles - WRF-Chem (Steve Utembe)
-setwd("C:/Users/eag873/ownCloud/vertical_profiles/vertical_prof/")
+setwd("C:/Users/eag873/ownCloud_uow/vertical_profiles/vertical_prof/")
 library(ncdf4)
 
 theta_v_from_RH <- function(RH, pres, temp) {
@@ -29,8 +29,13 @@ windcomponents <- function(ws,wd) {
 files <- c("MUMBA_Jan", "MUMBA_Feb", "SPS2", "SPS1")
 
 m <- c(5,5,11,11)
-period_start <-c("2013-01-01 00:00",  "2013-02-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
-period_end <- c("2013-02-02 00:00","2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+Sys.setenv(TZ = "UTC")
+#period_start <-c("2013-01-01 00:00",  "2013-02-01 00:00", "2012-04-16 00:00", "2011-02-07 00:00")
+#period_end <- c("2013-02-02 00:00","2013-02-16 00:00", "2012-05-14 00:00","2011-03-07 00:00")
+
+
+period_start <-c("2012-12-31 14:00:00","2013-01-31 14:00:00", "2012-04-15 14:00:00", "2011-02-06 14:00:00")
+period_end <- c("2013-01-31 13:00","2013-02-15 13:00:00", "2012-05-13 13:00:00","2011-03-06:00 13:00")
 
 
 #Steve also provided fixed heights
@@ -102,7 +107,7 @@ wrf_chem_pblh_MUMBA$campaign <- "MUMBA"
 
 wrf_chem_pblh <- rbind(wrf_chem_pblh_SPS1, wrf_chem_pblh_SPS2, wrf_chem_pblh_MUMBA) 
 setwd("C:/Users/eag873/Documents/R_Model_Intercomparison/Model output")
-save(wrf_chem_pblh, wrf_chem_pblh_MUMBA,wrf_chem_pblh_SPS1, wrf_chem_pblh_SPS2, file = "wrf_chem_pblh.RData")
+save(wrf_chem_pblh, wrf_chem_pblh_MUMBA,wrf_chem_pblh_SPS1, wrf_chem_pblh_SPS2, file = "wrf_chem_pblh_v2.RData")
 
 ####################
 library(openair)
